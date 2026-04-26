@@ -1,0 +1,44 @@
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" class="rounded-circle mb-2"
+                             width="90" height="90" style="object-fit:cover;" alt="avatar">
+                    {% else %}
+                        <div class="bg-success text-white rounded-circle d-inline-flex align-items-center
+                                    justify-content-center mb-2" style="width:90px;height:90px;font-size:2rem;">
+                            {{ user.first_name|first|upper }}
+                        </div>
+                    {% endif %}
+                    <h5 class="mb-0">{{ user.full_name }}</h5>
+                    <small class="text-muted">{{ user.email }}</small>
+                    <span class="badge bg-secondary ms-1">{{ user.get_role_display }}</span>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid mt-3">
+                        <button class="btn btn-success" type="submit">Save Changes</button>
+                    </div>
+                </form>
+
+                <hr>
+                <div class="text-center">
+                    <a href="{% url 'account_change_password' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-lock"></i> Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

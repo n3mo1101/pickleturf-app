@@ -172,3 +172,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
+
+# ─── ALLAUTH ADAPTERS ─────────────────────────────────────────────────────────
+
+ACCOUNT_ADAPTER        = 'accounts.adapters.AccountAdapter'
+SOCIALACCOUNT_ADAPTER  = 'accounts.adapters.SocialAccountAdapter'
+ACCOUNT_FORMS          = {'signup': 'accounts.forms.CustomSignupForm'}
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': os.environ.get('GOOGLE_CLIENT_ID', ''),
+            'secret':    os.environ.get('GOOGLE_CLIENT_SECRET', ''),
+            'key':       '',
+        },
+    },
+    'facebook': {
+        'METHOD': 'oauth2',
+        'SCOPE': ['email', 'public_profile'],
+        'APP': {
+            'client_id': os.environ.get('FACEBOOK_CLIENT_ID', ''),
+            'secret':    os.environ.get('FACEBOOK_CLIENT_SECRET', ''),
+            'key':       '',
+        },
+    },
+}
