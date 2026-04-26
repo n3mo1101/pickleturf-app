@@ -10,7 +10,8 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'bookings:list' %}">My Bookings</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'announcements:list' %}">News</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'inventory:shop' %}">Shop</a></li>
-                    {% if user.is_staff %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}"><i class="bi bi-person-circle"></i> {{ user.first_name }}</a></li>
+                    {% if is_admin_or_staff %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">Dashboard</a></li>
                     {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'account_logout' %}">Logout</a></li>
