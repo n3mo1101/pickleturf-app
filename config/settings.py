@@ -127,15 +127,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ─── ALLAUTH CONFIG ───────────────────────────────────────────────────────────
 
-ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_LOGIN_METHODS             = {'email'}
+ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION        = 'mandatory'
+ACCOUNT_UNIQUE_EMAIL              = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_CONFIRM_EMAIL_ON_GET = True
+ACCOUNT_CONFIRM_EMAIL_ON_GET      = True
 
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
