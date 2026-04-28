@@ -198,3 +198,9 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     },
 }
+
+# ─── BOOKING CONFIG ───────────────────────────────────────────────────────────
+BOOKING_OPENING_HOUR = 8    # 8:00 AM
+BOOKING_CLOSING_HOUR = 22   # 10:00 PM
+BOOKING_PRICE        = 150  # Default price per hour (₱)
+BOOKING_SLOT_HOURS   = 1    # Fixed 1-hour slots
