@@ -1,0 +1,67 @@
+{% extends 'layouts/base.html' %}
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-journal-check"></i> My Bookings</h4>
+    <a href="{% url 'bookings:create' %}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> New Booking
+    </a>
+</div>
+
+{% if bookings %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Court</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in bookings %}
+            <tr>
+                <td class="text-muted small">{{ b.id }}</td>
+                <td>{{ b.court.name }}</td>
+                <td>{{ b.date|date:"M d, Y" }}</td>
+                <td>{{ b.start_time|time:"g:i A" }} – {{ b.end_time|time:"g:i A" }}</td>
+                <td>₱{{ b.price }}</td>
+                <td>
+                    {% if b.status == 'confirmed' %}
+                        <span class="badge bg-success">Confirmed</span>
+                    {% elif b.status == 'cancelled' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                    {% elif b.status == 'completed' %}
+                        <span class="badge bg-secondary">Completed</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">{{ b.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if b.is_cancellable %}
+                    <a href="{% url 'bookings:cancel' b.pk %}"
+                       class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                    {% else %}
+                    <span class="text-muted small">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-calendar-x" style="font-size:3rem;"></i>
+    <p class="mt-3">No bookings yet.</p>
+    <a href="{% url 'bookings:create' %}" class="btn btn-success">Book a Court</a>
+</div>
+{% endif %}
+{% endblock %}

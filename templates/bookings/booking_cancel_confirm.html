@@ -1,0 +1,32 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Cancel Booking{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-5">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Cancel Booking</h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to cancel this booking?</p>
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item"><strong>Court:</strong> {{ booking.court.name }}</li>
+                    <li class="list-group-item"><strong>Date:</strong> {{ booking.date|date:"F j, Y" }}</li>
+                    <li class="list-group-item"><strong>Time:</strong> {{ booking.start_time|time:"g:i A" }}</li>
+                    <li class="list-group-item"><strong>Price:</strong> ₱{{ booking.price }}</li>
+                </ul>
+                <form method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger flex-fill">
+                        <i class="bi bi-x-circle"></i> Yes, Cancel
+                    </button>
+                    <a href="{% url 'bookings:my_bookings' %}" class="btn btn-outline-secondary flex-fill">
+                        Keep Booking
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

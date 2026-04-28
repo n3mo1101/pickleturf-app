@@ -1,0 +1,97 @@
+{% extends 'layouts/base.html' %}
+{% block title %}All Bookings (Admin){% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-table"></i> All Bookings</h4>
+    <a href="{% url 'bookings:admin_create' %}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Create Booking
+    </a>
+</div>
+
+<!-- Filters -->
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="court" class="form-select form-select-sm">
+            <option value="">All Courts</option>
+            {% for court in courts %}
+            <option value="{{ court.id }}" {% if court_filter == court.id|stringformat:"s" %}selected{% endif %}>
+                {{ court.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="date" name="date" class="form-control form-control-sm" value="{{ date_filter }}">
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-sm btn-outline-secondary" type="submit">Filter</button>
+        <a href="{% url 'bookings:admin_list' %}" class="btn btn-sm btn-link">Clear</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Court</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in bookings %}
+            <tr>
+                <td class="text-muted">{{ b.id }}</td>
+                <td>
+                    <span class="fw-semibold">{{ b.user.full_name }}</span><br>
+                    <small class="text-muted">{{ b.user.email }}</small>
+                </td>
+                <td>{{ b.court.name }}</td>
+                <td>{{ b.date|date:"M d, Y" }}</td>
+                <td class="text-nowrap">{{ b.start_time|time:"g:i A" }} – {{ b.end_time|time:"g:i A" }}</td>
+                <td>₱{{ b.price }}</td>
+                <td>
+                    {% if b.status == 'confirmed' %}<span class="badge bg-success">Confirmed</span>
+                    {% elif b.status == 'cancelled' %}<span class="badge bg-danger">Cancelled</span>
+                    {% elif b.status == 'completed' %}<span class="badge bg-secondary">Completed</span>
+                    {% else %}<span class="badge bg-warning text-dark">{{ b.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'bookings:admin_status' b.pk %}"
+                           class="btn btn-xs btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        {% if b.status == 'confirmed' %}
+                        <a href="{% url 'bookings:admin_cancel' b.pk %}"
+                           class="btn btn-xs btn-outline-danger btn-sm">
+                            <i class="bi bi-x-circle"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not bookings %}
+<div class="text-center py-4 text-muted">No bookings found for selected filters.</div>
+{% endif %}
+{% endblock %}
