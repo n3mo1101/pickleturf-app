@@ -129,3 +129,32 @@ def cancel_booking(booking, cancelled_by=None):
         booking.transaction.save(update_fields=['payment_status'])
 
     return booking
+
+
+# ── Court Availability ───────────────────────────────────────────────────────────────
+
+def get_available_slots_for_court(court, selected_date):
+    """
+    Returns list of (value, label) tuples for slots that are
+    still available for a specific court on a specific date.
+    Excludes past slots.
+    """
+    all_slots = get_time_slots()
+
+    booked_times = set(
+        Booking.objects.filter(
+            court=court,
+            date=selected_date,
+            status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED]
+        ).values_list('start_time', flat=True)
+    )
+
+    available = []
+    for slot_time, label in all_slots:
+        if slot_time in booked_times:
+            continue
+        if is_past_slot(selected_date, slot_time):
+            continue
+        available.append((slot_time.strftime('%H:%M:%S'), label))
+
+    return available

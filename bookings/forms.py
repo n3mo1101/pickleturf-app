@@ -1,54 +1,61 @@
 from django import forms
-from django.conf import settings
 from datetime import date
 from courts.models import Court
-from .services import get_time_slots
+from .services import get_time_slots, get_availability
 
 
 class BookingForm(forms.Form):
-    """Used by customers to make a booking."""
+    """
+    Step 1: court + date selection.
+    Step 2: available slot checkboxes appear.
+    """
     court = forms.ModelChoiceField(
         queryset=Court.objects.filter(is_active=True),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        empty_label='Select a court',
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'id_court',
+        }),
+        empty_label='— Select a Court —',
     )
     date = forms.DateField(
         widget=forms.DateInput(attrs={
             'class': 'form-control',
             'type': 'date',
             'min': date.today().isoformat(),
+            'id': 'id_date',
         }),
     )
-    start_time = forms.ChoiceField(
-        widget=forms.Select(attrs={'class': 'form-select'}),
+    time_slots = forms.MultipleChoiceField(
+        required=False,   # validated manually in view
+        widget=forms.CheckboxSelectMultiple(),
+        choices=[],       # populated dynamically
+        label='Available Time Slots',
     )
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, available_slots=None, **kwargs):
         super().__init__(*args, **kwargs)
-        # Populate time slot choices dynamically
-        slots = get_time_slots()
-        self.fields['start_time'].choices = [
-            (t.strftime('%H:%M:%S'), label) for t, label in slots
-        ]
+        if available_slots:
+            self.fields['time_slots'].choices = available_slots
+        else:
+            # Hide slot field until court+date are chosen
+            self.fields['time_slots'].widget = forms.HiddenInput()
 
     def clean_date(self):
         selected = self.cleaned_data['date']
         if selected < date.today():
-            raise forms.ValidationError('Please select a future date.')
+            raise forms.ValidationError('Please select today or a future date.')
         return selected
 
 
 class AdminBookingForm(forms.Form):
-    """Extended form for admin/staff — can book for any user."""
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
+    """Admin version — can assign booking to any user."""
 
     user = forms.ModelChoiceField(
-        queryset=None,  # set in __init__
+        queryset=None,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='Customer',
     )
@@ -63,20 +70,31 @@ class AdminBookingForm(forms.Form):
             'min': date.today().isoformat(),
         }),
     )
-    start_time = forms.ChoiceField(
-        widget=forms.Select(attrs={'class': 'form-select'}),
+    time_slots = forms.MultipleChoiceField(
+        required=False,
+        widget=forms.CheckboxSelectMultiple(),
+        choices=[],
+        label='Available Time Slots',
     )
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, available_slots=None, **kwargs):
         from django.contrib.auth import get_user_model
         User = get_user_model()
         super().__init__(*args, **kwargs)
-        self.fields['user'].queryset = User.objects.filter(is_active=True).order_by('email')
-        slots = get_time_slots()
-        self.fields['start_time'].choices = [
-            (t.strftime('%H:%M:%S'), label) for t, label in slots
-        ]
+        self.fields['user'].queryset = (
+            User.objects.filter(is_active=True).order_by('email')
+        )
+        if available_slots:
+            self.fields['time_slots'].choices = available_slots
+        else:
+            self.fields['time_slots'].widget = forms.HiddenInput()
+
+    def clean_date(self):
+        selected = self.cleaned_data['date']
+        if selected < __import__('datetime').date.today():
+            raise forms.ValidationError('Please select today or a future date.')
+        return selected

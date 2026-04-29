@@ -33,49 +33,86 @@ def availability_view(request):
 
 @login_required
 def booking_create_view(request):
-    """Customer creates a new booking."""
-    # Pre-fill from query params (e.g. clicking a slot on the grid)
-    initial = {
-        'court':      request.GET.get('court'),
-        'date':       request.GET.get('date', date.today().isoformat()),
-        'start_time': request.GET.get('time'),
-    }
+    """
+    Two-phase booking:
+    Phase 1 (GET)  — user picks court + date → page reloads showing available slots.
+    Phase 2 (POST) — user submits selected slots → bookings created.
+    """
+    from django.conf import settings as django_settings
+    from datetime import datetime
 
-    form = BookingForm(request.POST or None, initial=initial)
+    court_id      = request.GET.get('court') or request.POST.get('court')
+    selected_date = request.GET.get('date')  or request.POST.get('date')
 
-    if request.method == 'POST' and form.is_valid():
-        data  = form.cleaned_data
-        court = data['court']
+    court          = None
+    available_slots = None
+    parsed_date    = None
 
-        # Parse start_time string back to time object
-        from datetime import time as dtime
+    # Resolve court and date to show slot checkboxes
+    if court_id and selected_date:
         try:
-            t = datetime.strptime(data['start_time'], '%H:%M:%S').time()
-        except ValueError:
-            t = datetime.strptime(data['start_time'], '%H:%M').time()
+            court       = Court.objects.get(pk=court_id, is_active=True)
+            parsed_date = date.fromisoformat(selected_date)
+            available_slots = services.get_available_slots_for_court(court, parsed_date)
+        except (Court.DoesNotExist, ValueError):
+            court = None
 
-        try:
-            booking = services.create_booking(
-                user=request.user,
-                court=court,
-                selected_date=data['date'],
-                start_time=t,
-                notes=data.get('notes', ''),
-            )
-            messages.success(
-                request,
-                f'✅ Booking confirmed! {court} on {booking.date} at '
-                f'{booking.start_time.strftime("%I:%M %p")}. '
-                f'Please pay ₱{booking.price} on-site.'
-            )
-            return redirect('bookings:my_bookings')
-        except ValidationError as e:
-            messages.error(request, str(e))
+    if request.method == 'POST':
+        form = BookingForm(request.POST, available_slots=available_slots)
+
+        if not form.is_valid():
+            pass  # fall through to render with errors
+
+        elif not form.cleaned_data.get('time_slots'):
+            form.add_error('time_slots', 'Please select at least one time slot.')
+
+        else:
+            data       = form.cleaned_data
+            slots      = data['time_slots']        # list of 'HH:MM:SS' strings
+            created    = []
+            errors     = []
+
+            for slot_str in slots:
+                try:
+                    t = datetime.strptime(slot_str, '%H:%M:%S').time()
+                    booking = services.create_booking(
+                        user=request.user,
+                        court=data['court'],
+                        selected_date=data['date'],
+                        start_time=t,
+                        notes=data.get('notes', ''),
+                    )
+                    created.append(booking)
+                except ValidationError as e:
+                    errors.append(str(e.message))
+
+            if created:
+                total_hrs   = len(created)
+                total_price = sum(b.price for b in created)
+                messages.success(
+                    request,
+                    f'✅ {total_hrs} slot(s) booked on {parsed_date.strftime("%b %d, %Y")} '
+                    f'for {data["court"]}. '
+                    f'Total: ₱{total_price} — pay on-site.'
+                )
+            for err in errors:
+                messages.warning(request, f'⚠️ Skipped one slot: {err}')
+
+            if created:
+                return redirect('bookings:my_bookings')
+
+    else:
+        # Pre-fill court/date from query params (e.g. clicking grid)
+        initial = {'court': court_id, 'date': selected_date}
+        form = BookingForm(initial=initial, available_slots=available_slots)
 
     return render(request, 'bookings/booking_form.html', {
-        'form':  form,
-        'title': 'Book a Court',
-        'price': __import__('django.conf', fromlist=['settings']).settings.BOOKING_PRICE,
+        'form':           form,
+        'title':          'Book a Court',
+        'price_per_hour': django_settings.BOOKING_PRICE,
+        'court':          court,
+        'selected_date':  parsed_date,
+        'slots_available': available_slots,
     })
 
 
@@ -138,34 +175,78 @@ def admin_booking_list_view(request):
 
 @admin_or_staff_required
 def admin_booking_create_view(request):
-    """Admin manually creates a booking for any user."""
-    form = AdminBookingForm(request.POST or None)
+    """Admin creates multi-slot booking for any user."""
+    from django.conf import settings as django_settings
+    from datetime import datetime
 
-    if request.method == 'POST' and form.is_valid():
-        data  = form.cleaned_data
-        from datetime import time as dtime
-        try:
-            t = datetime.strptime(data['start_time'], '%H:%M:%S').time()
-        except ValueError:
-            t = datetime.strptime(data['start_time'], '%H:%M').time()
+    court_id      = request.GET.get('court') or request.POST.get('court')
+    selected_date = request.GET.get('date')  or request.POST.get('date')
 
+    court           = None
+    available_slots = None
+    parsed_date     = None
+
+    if court_id and selected_date:
         try:
-            booking = services.create_booking(
-                user=data['user'],
-                court=data['court'],
-                selected_date=data['date'],
-                start_time=t,
-                created_by=request.user,
-                notes=data.get('notes', ''),
-            )
-            messages.success(request, f'Booking created for {booking.user.full_name}.')
-            return redirect('bookings:admin_list')
-        except ValidationError as e:
-            messages.error(request, str(e))
+            court           = Court.objects.get(pk=court_id, is_active=True)
+            parsed_date     = date.fromisoformat(selected_date)
+            available_slots = services.get_available_slots_for_court(court, parsed_date)
+        except (Court.DoesNotExist, ValueError):
+            court = None
+
+    if request.method == 'POST':
+        form = AdminBookingForm(request.POST, available_slots=available_slots)
+
+        if not form.is_valid():
+            pass
+
+        elif not form.cleaned_data.get('time_slots'):
+            form.add_error('time_slots', 'Please select at least one time slot.')
+
+        else:
+            data    = form.cleaned_data
+            slots   = data['time_slots']
+            created = []
+            errors  = []
+
+            for slot_str in slots:
+                try:
+                    t = datetime.strptime(slot_str, '%H:%M:%S').time()
+                    booking = services.create_booking(
+                        user=data['user'],
+                        court=data['court'],
+                        selected_date=data['date'],
+                        start_time=t,
+                        created_by=request.user,
+                        notes=data.get('notes', ''),
+                    )
+                    created.append(booking)
+                except ValidationError as e:
+                    errors.append(str(e.message))
+
+            if created:
+                messages.success(
+                    request,
+                    f'{len(created)} booking(s) created for {data["user"].full_name}.'
+                )
+            for err in errors:
+                messages.warning(request, f'Skipped: {err}')
+
+            if created:
+                return redirect('bookings:admin_list')
+
+    else:
+        initial = {'court': court_id, 'date': selected_date}
+        form = AdminBookingForm(initial=initial, available_slots=available_slots)
 
     return render(request, 'bookings/booking_form.html', {
-        'form':  form,
-        'title': 'Create Booking (Admin)',
+        'form':           form,
+        'title':          'Create Booking (Admin)',
+        'price_per_hour': django_settings.BOOKING_PRICE,
+        'court':          court,
+        'selected_date':  parsed_date,
+        'slots_available': available_slots,
+        'is_admin':       True,
     })
 
 

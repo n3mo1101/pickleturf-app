@@ -85,11 +85,12 @@ class Booking(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        self.full_clean()
-        # Auto-set end_time = start_time + 1 hour
+        # Set end_time FIRST, then validate
         from datetime import datetime, timedelta
-        dt = datetime.combine(self.date, self.start_time)
-        self.end_time = (dt + timedelta(hours=1)).time()
+        if self.date and self.start_time:
+            dt = datetime.combine(self.date, self.start_time)
+            self.end_time = (dt + timedelta(hours=1)).time()
+        self.full_clean()
         super().save(*args, **kwargs)
 
     def cancel(self, save=True):
