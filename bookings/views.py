@@ -70,7 +70,7 @@ def booking_create_view(request):
             )
             return redirect('bookings:my_bookings')
         except ValidationError as e:
-            messages.error(request, e.message)
+            messages.error(request, str(e))
 
     return render(request, 'bookings/booking_form.html', {
         'form':  form,
@@ -101,7 +101,7 @@ def booking_cancel_view(request, pk):
             services.cancel_booking(booking, cancelled_by=request.user)
             messages.success(request, 'Booking cancelled successfully.')
         except ValidationError as e:
-            messages.error(request, e.message)
+            messages.error(request, str(e))
         return redirect('bookings:my_bookings')
 
     return render(request, 'bookings/booking_cancel_confirm.html', {'booking': booking})
@@ -161,7 +161,7 @@ def admin_booking_create_view(request):
             messages.success(request, f'Booking created for {booking.user.full_name}.')
             return redirect('bookings:admin_list')
         except ValidationError as e:
-            messages.error(request, e.message)
+            messages.error(request, str(e))
 
     return render(request, 'bookings/booking_form.html', {
         'form':  form,
@@ -179,7 +179,7 @@ def admin_booking_cancel_view(request, pk):
             services.cancel_booking(booking, cancelled_by=request.user)
             messages.success(request, f'Booking #{pk} cancelled.')
         except ValidationError as e:
-            messages.error(request, e.message)
+            messages.error(request, str(e))
         return redirect('bookings:admin_list')
 
     return render(request, 'bookings/booking_cancel_confirm.html', {
