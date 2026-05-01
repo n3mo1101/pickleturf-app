@@ -26,133 +26,76 @@ class InventoryItemForm(forms.ModelForm):
             'stock', 'image', 'is_active',
         ]
         widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Item name',
-            }),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control', 'rows': 2,
-            }),
-            'item_type': forms.Select(attrs={
-                'class': 'form-select',
-                'id': 'id_item_type',
-            }),
-            'sale_price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 0, 'step': '0.01',
-                'placeholder': '0.00',
-            }),
-            'rent_price': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 0, 'step': '0.01',
-                'placeholder': '0.00 per hour',
-            }),
-            'stock': forms.NumberInput(attrs={
-                'class': 'form-control', 'min': 0,
-            }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input',
-            }),
+            'name':        forms.TextInput(attrs={'class': 'form-control'}),
+            'category':    forms.Select(attrs={'class': 'form-select'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'item_type':   forms.Select(attrs={'class': 'form-select', 'id': 'id_item_type'}),
+            'sale_price':  forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': '0.01'}),
+            'rent_price':  forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'step': '0.01'}),
+            'stock':       forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
+            'is_active':   forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean(self):
         cleaned   = super().clean()
         item_type = cleaned.get('item_type')
-        sale_price = cleaned.get('sale_price')
-        rent_price = cleaned.get('rent_price')
-
-        if item_type in (
-            InventoryItem.ItemType.SALE,
-            InventoryItem.ItemType.BOTH
-        ) and not sale_price:
-            self.add_error('sale_price', 'Sale price is required.')
-
-        if item_type in (
-            InventoryItem.ItemType.RENT,
-            InventoryItem.ItemType.BOTH
-        ) and not rent_price:
-            self.add_error('rent_price', 'Rent price is required.')
-
+        if item_type in (InventoryItem.ItemType.SALE, InventoryItem.ItemType.BOTH):
+            if not cleaned.get('sale_price'):
+                self.add_error('sale_price', 'Sale price is required.')
+        if item_type in (InventoryItem.ItemType.RENT, InventoryItem.ItemType.BOTH):
+            if not cleaned.get('rent_price'):
+                self.add_error('rent_price', 'Rent price is required.')
         return cleaned
 
 
 class StockAdjustForm(forms.Form):
-    """Admin manually adjusts stock level."""
-    ACTION_CHOICES = [
-        ('add',    'Add Stock'),
-        ('deduct', 'Deduct Stock'),
-    ]
+    ACTION_CHOICES = [('add', 'Add Stock'), ('deduct', 'Deduct Stock')]
     action   = forms.ChoiceField(
         choices=ACTION_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
     quantity = forms.IntegerField(
         min_value=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control', 'min': 1,
-        }),
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
     )
     reason = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Reason for adjustment (optional)',
+            'placeholder': 'Reason (optional)',
         }),
     )
 
 
 class RentalCreateForm(forms.Form):
-    """Admin records a new rental transaction."""
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-
-    user = forms.ModelChoiceField(
-        queryset=None,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label='Customer',
+    """
+    Walk-in friendly rental form.
+    No user account required — just name + optional contact.
+    """
+    renter_name = forms.CharField(
+        max_length=100,
+        label='Renter Name',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Full name of renter',
+        }),
+    )
+    renter_contact = forms.CharField(
+        max_length=100,
+        required=False,
+        label='Contact (optional)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Phone number or email',
+        }),
     )
     hours = forms.IntegerField(
         min_value=1,
         initial=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control', 'min': 1,
-        }),
         label='Rental Duration (hours)',
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
     )
-
-    def __init__(self, *args, **kwargs):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        super().__init__(*args, **kwargs)
-        self.fields['user'].queryset = (
-            User.objects.filter(is_active=True).order_by('email')
-        )
-
-
-class SaleCreateForm(forms.Form):
-    """Admin records a sale transaction."""
-    from django.contrib.auth import get_user_model
-
-    user = forms.ModelChoiceField(
-        queryset=None,
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label='Customer',
+    notes = forms.CharField(
         required=False,
-        help_text='Leave blank for walk-in customers.',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
     )
-    quantity = forms.IntegerField(
-        min_value=1,
-        initial=1,
-        widget=forms.NumberInput(attrs={
-            'class': 'form-control', 'min': 1,
-        }),
-    )
-
-    def __init__(self, *args, **kwargs):
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        super().__init__(*args, **kwargs)
-        self.fields['user'].queryset = (
-            User.objects.filter(is_active=True).order_by('email')
-        )

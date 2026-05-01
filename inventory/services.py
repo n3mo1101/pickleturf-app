@@ -1,40 +1,116 @@
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .models import InventoryItem, RentalRecord
+from .models import InventoryItem, RentalRecord, Sale, SaleItem
 
 
-# ── Stock Management ───────────────────────────────────────────────────────────
+# ── Stock Adjustment ───────────────────────────────────────────────────────────
 
 def adjust_stock(item, quantity, action='deduct'):
-    """
-    Adjust stock for an item.
-    action: 'deduct' or 'add'
-    """
+    """Manually adjust stock. action: 'add' or 'deduct'."""
     if action == 'deduct':
         if item.stock < quantity:
             raise ValidationError(
-                f'Insufficient stock. Only {item.stock} unit(s) of '
-                f'"{item.name}" available.'
+                f'Insufficient stock. Only {item.stock} '
+                f'unit(s) of "{item.name}" available.'
             )
         item.stock -= quantity
     elif action == 'add':
         item.stock += quantity
     else:
-        raise ValueError('action must be "deduct" or "add"')
+        raise ValueError('action must be "add" or "deduct"')
 
     item.save(update_fields=['stock'])
     return item
 
 
-# ── Rental Management ──────────────────────────────────────────────────────────
+# ── POS Sale ───────────────────────────────────────────────────────────────────
 
-def create_rental(item, user, hours, handled_by=None):
+def process_sale(cart_items, created_by=None, notes=''):
+    """
+    Process a POS sale from a list of cart items.
+
+    cart_items: list of dicts → [{'item': InventoryItem, 'quantity': int}, ...]
+
+    Steps:
+      1. Validate all stock levels before touching anything
+      2. Create Sale header
+      3. Create SaleItem line items + deduct stock
+      4. Compute total
+      5. Create one Transaction record
+    """
+    if not cart_items:
+        raise ValidationError('Cart is empty.')
+
+    # ── Step 1: Validate everything first ─────────────────────────
+    for entry in cart_items:
+        item = entry['item']
+        qty  = entry['quantity']
+
+        if item.item_type not in (
+            InventoryItem.ItemType.SALE,
+            InventoryItem.ItemType.BOTH
+        ):
+            raise ValidationError(f'"{item.name}" is not available for sale.')
+
+        if not item.sale_price:
+            raise ValidationError(f'"{item.name}" has no sale price set.')
+
+        if item.stock < qty:
+            raise ValidationError(
+                f'Insufficient stock for "{item.name}". '
+                f'Available: {item.stock}, requested: {qty}.'
+            )
+
+    # ── Step 2: Create Sale header ─────────────────────────────────
+    sale = Sale.objects.create(created_by=created_by, notes=notes)
+
+    # ── Step 3: Create line items + deduct stock ───────────────────
+    for entry in cart_items:
+        item = entry['item']
+        qty  = entry['quantity']
+
+        SaleItem.objects.create(
+            sale=sale,
+            item=item,
+            quantity=qty,
+            unit_price=item.sale_price,
+        )
+        item.deduct_stock(qty)
+
+    # ── Step 4: Compute total ──────────────────────────────────────
+    sale.compute_total()
+
+    # ── Step 5: Create transaction ─────────────────────────────────
+    _create_sale_transaction(sale, created_by)
+
+    return sale
+
+
+def _create_sale_transaction(sale, created_by=None):
+    """Log one Transaction record for the entire sale."""
+    from transactions.models import Transaction
+
+    item_summary = ', '.join(
+        f'{si.item.name} x{si.quantity}'
+        for si in sale.items.select_related('item')
+    )
+    Transaction.objects.create(
+        user=None,                         # no user linked for walk-in sales
+        tx_type=Transaction.TxType.SALE,
+        amount=sale.total,
+        sale=sale,
+        description=f'POS Sale – {item_summary}',
+        created_by=created_by,
+    )
+
+
+# ── Rentals ────────────────────────────────────────────────────────────────────
+
+def create_rental(item, renter_name, hours, renter_contact='', handled_by=None):
     """
     Create a rental record and deduct stock.
-    Raises ValidationError if item is not rentable or out of stock.
+    No user account needed — just name + optional contact.
     """
-    from inventory.models import InventoryItem
-
     if item.item_type not in (
         InventoryItem.ItemType.RENT,
         InventoryItem.ItemType.BOTH
@@ -47,26 +123,22 @@ def create_rental(item, user, hours, handled_by=None):
     if not item.rent_price:
         raise ValidationError(f'"{item.name}" has no rental price set.')
 
-    # Deduct stock
-    adjust_stock(item, 1, action='deduct')
+    item.deduct_stock(1)
 
     rental = RentalRecord.objects.create(
         item=item,
-        user=user,
+        renter_name=renter_name.strip(),
+        renter_contact=renter_contact.strip(),
         hours=hours,
         handled_by=handled_by,
-        total_cost=item.rent_price * hours,
     )
 
-    # Create transaction
-    _create_rental_transaction(rental)
+    _create_rental_transaction(rental, handled_by)
     return rental
 
 
 def return_rental(rental, handled_by=None):
-    """
-    Mark rental as returned and restore stock.
-    """
+    """Mark rental returned and restore stock."""
     if rental.status == RentalRecord.Status.RETURNED:
         raise ValidationError('This item has already been returned.')
 
@@ -76,56 +148,21 @@ def return_rental(rental, handled_by=None):
         rental.handled_by = handled_by
     rental.save(update_fields=['status', 'returned_at', 'handled_by'])
 
-    # Restore stock
-    adjust_stock(rental.item, 1, action='add')
+    rental.item.add_stock(1)
     return rental
 
 
-def record_sale(item, quantity, user, handled_by=None):
-    """
-    Record a sale and deduct stock.
-    Raises ValidationError if item is not for sale or out of stock.
-    """
-    from inventory.models import InventoryItem
-
-    if item.item_type not in (
-        InventoryItem.ItemType.SALE,
-        InventoryItem.ItemType.BOTH
-    ):
-        raise ValidationError(f'"{item.name}" is not available for sale.')
-
-    if item.stock < quantity:
-        raise ValidationError(
-            f'Insufficient stock. Only {item.stock} unit(s) available.'
-        )
-
-    adjust_stock(item, quantity, action='deduct')
-    _create_sale_transaction(item, quantity, user, handled_by)
-
-
-def _create_rental_transaction(rental):
-    """Create a pending transaction for a rental."""
+def _create_rental_transaction(rental, created_by=None):
+    """Log a Transaction for a rental."""
     from transactions.models import Transaction
     Transaction.objects.create(
-        user=rental.user,
+        user=None,
         tx_type=Transaction.TxType.RENTAL,
         amount=rental.total_cost,
         rental=rental,
         description=(
-            f'Rental – {rental.item.name} x {rental.hours} hour(s)'
+            f'Rental – {rental.item.name} x {rental.hours}h '
+            f'({rental.renter_name})'
         ),
-        created_by=rental.handled_by,
-    )
-
-
-def _create_sale_transaction(item, quantity, user, handled_by=None):
-    """Create a transaction for a sale."""
-    from transactions.models import Transaction
-    total = item.sale_price * quantity
-    Transaction.objects.create(
-        user=user,
-        tx_type=Transaction.TxType.SALE,
-        amount=total,
-        description=f'Sale – {item.name} x {quantity}',
-        created_by=handled_by,
+        created_by=created_by,
     )
