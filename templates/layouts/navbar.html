@@ -42,7 +42,14 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'inventory:shop' %}">Shop</a></li>
                     {% if is_admin_or_staff %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'inventory:admin_list' %}"><i class="bi bi-boxes"></i> Inventory</a>
+                        <a class="nav-link" href="{% url 'inventory:admin_pos' %}">
+                            <i class="bi bi-cart3"></i> POS
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventory:admin_list' %}">
+                            <i class="bi bi-boxes"></i> Inventory
+                        </a>
                     </li>
                     {% endif %}
         

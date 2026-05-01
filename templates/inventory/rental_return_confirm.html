@@ -15,7 +15,10 @@
                         <strong>Item:</strong> {{ rental.item.name }}
                     </li>
                     <li class="list-group-item">
-                        <strong>Customer:</strong> {{ rental.user.full_name }}
+                        <strong>Renter:</strong> {{ rental.renter_name }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Contact:</strong> {{ rental.renter_contact|default:"—" }}
                     </li>
                     <li class="list-group-item">
                         <strong>Rented:</strong>

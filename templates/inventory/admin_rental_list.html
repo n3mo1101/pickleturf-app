@@ -8,6 +8,32 @@
 </div>
 
 <form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="Search by renter name, contact, or item..."
+               value="{{ search_query }}">
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}"
+                {% if status_filter == val %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+            Filter
+        </button>
+        <a href="{% url 'inventory:admin_rental_list' %}"
+           class="btn btn-sm btn-link">Clear</a>
+    </div>
+</form>
+
+<form method="get" class="row g-2 mb-3">
     <div class="col-md-3">
         <select name="status" class="form-select form-select-sm">
             <option value="">All Statuses</option>
@@ -32,15 +58,24 @@
     <table class="table table-hover align-middle">
         <thead class="table-dark">
             <tr>
-                <th>Item</th><th>Customer</th><th>Rented At</th>
-                <th>Hours</th><th>Cost</th><th>Status</th><th>Action</th>
+                <th>#</th>
+                <th>Item</th>
+                <th>Renter</th>
+                <th>Contact</th>
+                <th>Rented At</th>
+                <th>Hours</th>
+                <th>Cost</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for r in rentals %}
             <tr>
+                <td class="text-muted small">{{ r.pk }}</td>
                 <td class="fw-semibold">{{ r.item.name }}</td>
-                <td>{{ r.user.full_name }}</td>
+                <td>{{ r.renter_name }}</td>
+                <td class="text-muted small">{{ r.renter_contact|default:"—" }}</td>
                 <td>{{ r.rented_at|date:"M d, Y g:i A" }}</td>
                 <td>{{ r.hours }}h</td>
                 <td>₱{{ r.total_cost }}</td>
@@ -56,18 +91,12 @@
                 <td>
                     {% if r.status == 'active' %}
                     <a href="{% url 'inventory:admin_return' r.pk %}"
-                       class="btn btn-sm btn-success">
+                    class="btn btn-sm btn-success">
                         <i class="bi bi-arrow-return-left"></i> Return
                     </a>
                     {% else %}
                     <span class="text-muted small">—</span>
                     {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7" class="text-center text-muted py-4">
-                    No rental records found.
                 </td>
             </tr>
             {% endfor %}

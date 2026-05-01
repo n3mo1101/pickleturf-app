@@ -154,13 +154,6 @@
                             <i class="bi bi-clock"></i>
                         </a>
                         {% endif %}
-                        {% if item.item_type in 'sale,both' %}
-                        <a href="{% url 'inventory:admin_sell' item.pk %}"
-                           class="btn btn-sm btn-outline-success"
-                           title="Record Sale">
-                            <i class="bi bi-cart-plus"></i>
-                        </a>
-                        {% endif %}
                         <a href="{% url 'inventory:admin_delete' item.pk %}"
                            class="btn btn-sm btn-outline-danger"
                            title="Delete">
