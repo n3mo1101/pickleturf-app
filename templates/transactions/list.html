@@ -10,8 +10,9 @@
     </a>
 </div>
 
-<form method="get" class="row g-2 mb-4">
-    <div class="col-md-3">
+{# ── Filters ── #}
+<form method="get" class="row g-2 mb-3" id="filter-form">
+    <div class="col-md-2">
         <select name="type" class="form-select form-select-sm">
             <option value="">All Types</option>
             {% for val, label in type_choices %}
@@ -22,7 +23,7 @@
             {% endfor %}
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <select name="status" class="form-select form-select-sm">
             <option value="">All Statuses</option>
             {% for val, label in status_choices %}
@@ -33,15 +34,59 @@
             {% endfor %}
         </select>
     </div>
+    <div class="col-md-2">
+        <input type="date" name="date_from"
+               class="form-control form-control-sm"
+               value="{{ date_from }}"
+               placeholder="From date">
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="date_to"
+               class="form-control form-control-sm"
+               value="{{ date_to }}"
+               placeholder="To date">
+    </div>
     <div class="col-auto">
-        <button type="submit" class="btn btn-sm btn-outline-secondary">
-            Filter
+        <button type="submit"
+                class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-funnel"></i> Filter
         </button>
         <a href="{% url 'transactions:list' %}"
            class="btn btn-sm btn-link">Clear</a>
     </div>
 </form>
 
+{# ── Running Total Summary ── #}
+<div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-light text-center py-3">
+            <div class="fs-4 fw-bold text-success">
+                ₱{{ total_amount|floatformat:2 }}
+            </div>
+            <div class="small text-muted">
+                Total
+                {% if type_filter or status_filter or date_from or date_to %}
+                (filtered)
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-light text-center py-3">
+            <div class="fs-4 fw-bold text-primary">
+                {{ total_count }}
+            </div>
+            <div class="small text-muted">
+                Transaction(s)
+                {% if type_filter or status_filter or date_from or date_to %}
+                (filtered)
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Table ── #}
 <div class="table-responsive">
     <table class="table table-hover align-middle">
         <thead class="table-dark">
@@ -52,6 +97,7 @@
                 <th>Amount</th>
                 <th>Status</th>
                 <th>Date</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -60,37 +106,66 @@
                 <td class="text-muted small">{{ tx.pk }}</td>
                 <td>
                     {% if tx.tx_type == 'booking' %}
-                    <span class="badge bg-success">Booking</span>
+                        <span class="badge bg-success">Booking</span>
                     {% elif tx.tx_type == 'sale' %}
-                    <span class="badge bg-primary">Sale</span>
+                        <span class="badge bg-primary">Sale</span>
                     {% elif tx.tx_type == 'rental' %}
-                    <span class="badge bg-warning text-dark">Rental</span>
+                        <span class="badge bg-warning text-dark">Rental</span>
                     {% elif tx.tx_type == 'openplay' %}
-                    <span class="badge bg-info text-dark">Open Play</span>
+                        <span class="badge bg-info text-dark">Open Play</span>
                     {% else %}
-                    <span class="badge bg-secondary">Manual</span>
+                        <span class="badge bg-secondary">Manual</span>
                     {% endif %}
                 </td>
-                <td class="small">{{ tx.description|default:"—" }}</td>
-                <td class="fw-semibold text-success">₱{{ tx.amount }}</td>
+                <td class="small">
+                    {{ tx.description|default:"—"|truncatechars:50 }}
+                </td>
+                <td class="fw-semibold text-success">
+                    ₱{{ tx.amount }}
+                </td>
                 <td>
                     {% if tx.payment_status == 'paid' %}
-                    <span class="badge bg-success">Paid</span>
+                        <span class="badge bg-success">Paid</span>
                     {% elif tx.payment_status == 'pending' %}
-                    <span class="badge bg-warning text-dark">Pending</span>
+                        <span class="badge bg-warning text-dark">Pending</span>
                     {% elif tx.payment_status == 'refunded' %}
-                    <span class="badge bg-danger">Refunded</span>
+                        <span class="badge bg-danger">Refunded</span>
                     {% else %}
-                    <span class="badge bg-secondary">Waived</span>
+                        <span class="badge bg-secondary">Waived</span>
                     {% endif %}
                 </td>
                 <td class="text-muted small text-nowrap">
-                    {{ tx.created_at|date:"M d, Y g:i A" }}
+                    {{ tx.created_at|date:"M d, Y" }}<br>
+                    <span style="font-size:.7rem;">
+                        {{ tx.created_at|time:"g:i A" }}
+                    </span>
+                </td>
+                <td>
+                    {% if tx.payment_status == 'pending' %}
+                    <form method="post"
+                          action="{% url 'transactions:mark_paid' tx.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next"
+                               value="{{ request.get_full_path }}">
+                        <button type="submit"
+                                class="btn btn-sm btn-success"
+                                onclick="return confirm(
+                                    'Mark transaction #{{ tx.pk }} as paid?'
+                                    {% if tx.booking %}
+                                    + '\nThis will also mark Booking #{{ tx.booking.pk }} as Completed.'
+                                    {% endif %}
+                                )">
+                            <i class="bi bi-check-circle"></i> Mark Paid
+                        </button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted small">—</span>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="text-center text-muted py-4">
+                <td colspan="7" class="text-center text-muted py-4">
                     No transactions found.
                 </td>
             </tr>
@@ -98,4 +173,63 @@
         </tbody>
     </table>
 </div>
+
+{# ── Pagination ── #}
+{% if transactions.has_other_pages %}
+<nav class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center">
+
+        {# Previous #}
+        {% if transactions.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ transactions.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">
+                &laquo; Prev
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">&laquo; Prev</span>
+        </li>
+        {% endif %}
+
+        {# Page Numbers #}
+        {% for num in transactions.paginator.page_range %}
+            {% if transactions.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link"
+                   href="?page={{ num }}{% if query_string %}&{{ query_string }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+        {% endfor %}
+
+        {# Next #}
+        {% if transactions.has_next %}
+        <li class="page-item">
+            <a class="page-link"
+               href="?page={{ transactions.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}">
+                Next &raquo;
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link">Next &raquo;</span>
+        </li>
+        {% endif %}
+
+    </ul>
+    <p class="text-center text-muted small">
+        Page {{ transactions.number }} of
+        {{ transactions.paginator.num_pages }}
+        — {{ total_count }} transaction(s)
+    </p>
+</nav>
+{% endif %}
+
 {% endblock %}
