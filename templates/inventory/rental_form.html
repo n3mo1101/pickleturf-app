@@ -1,0 +1,33 @@
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Rent Out – {{ item.name }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock"></i> Rent Out – {{ item.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-secondary">
+                    Rent price: <strong>₱{{ item.rent_price }}/hour</strong> |
+                    Stock: <strong>{{ item.stock }}</strong>
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="bi bi-check-circle"></i> Confirm Rental
+                        </button>
+                        <a href="{% url 'inventory:admin_detail' item.pk %}"
+                           class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

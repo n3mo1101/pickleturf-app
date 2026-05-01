@@ -1,0 +1,182 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Inventory Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-boxes"></i> Inventory</h4>
+        {% if low_stock_count > 0 %}
+        <span class="badge bg-warning text-dark">
+            <i class="bi bi-exclamation-triangle"></i>
+            {{ low_stock_count }} item(s) low on stock
+        </span>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:admin_categories' %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-tags"></i> Categories
+        </a>
+        <a href="{% url 'inventory:admin_rental_list' %}"
+           class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-clock-history"></i> Rentals
+        </a>
+        <a href="{% url 'inventory:admin_create' %}"
+           class="btn btn-success btn-sm">
+            <i class="bi bi-plus-circle"></i> Add Item
+        </a>
+    </div>
+</div>
+
+{# Filters #}
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <input type="text" name="q" class="form-control form-control-sm"
+               placeholder="Search..." value="{{ search_query }}">
+    </div>
+    <div class="col-md-2">
+        <select name="category" class="form-select form-select-sm">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}"
+                {% if category_filter == cat.id|stringformat:"s" %}selected{% endif %}>
+                {{ cat.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="type" class="form-select form-select-sm">
+            <option value="">All Types</option>
+            {% for val, label in type_choices %}
+            <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="stock" class="form-select form-select-sm">
+            <option value="">All Stock</option>
+            <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>
+                Low (≤5)
+            </option>
+            <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>
+                Out of Stock
+            </option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+        <a href="{% url 'inventory:admin_list' %}" class="btn btn-sm btn-link">Clear</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Item</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Sale Price</th>
+                <th>Rent Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr {% if item.stock == 0 %}class="table-danger"
+                {% elif item.stock <= 5 %}class="table-warning"{% endif %}>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}" width="36" height="36"
+                             class="rounded" style="object-fit:cover;">
+                        {% else %}
+                        <div class="bg-secondary rounded d-flex align-items-center
+                                    justify-content-center text-white"
+                             style="width:36px;height:36px;font-size:.8rem;">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        {% endif %}
+                        <span class="fw-semibold">{{ item.name }}</span>
+                    </div>
+                </td>
+                <td>{{ item.category.name|default:"—" }}</td>
+                <td>
+                    <span class="badge
+                        {% if item.item_type == 'sale' %}bg-primary
+                        {% elif item.item_type == 'rent' %}bg-warning text-dark
+                        {% else %}bg-success{% endif %}">
+                        {{ item.get_item_type_display }}
+                    </span>
+                </td>
+                <td>{% if item.sale_price %}₱{{ item.sale_price }}{% else %}—{% endif %}</td>
+                <td>{% if item.rent_price %}₱{{ item.rent_price }}/hr{% else %}—{% endif %}</td>
+                <td>
+                    <span class="fw-bold
+                        {% if item.stock == 0 %}text-danger
+                        {% elif item.stock <= 5 %}text-warning{% endif %}">
+                        {{ item.stock }}
+                    </span>
+                </td>
+                <td>
+                    {% if item.is_active %}
+                    <span class="badge bg-success">Active</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="d-flex gap-1 flex-wrap">
+                        <a href="{% url 'inventory:admin_detail' item.pk %}"
+                           class="btn btn-sm btn-outline-secondary"
+                           title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="{% url 'inventory:admin_edit' item.pk %}"
+                           class="btn btn-sm btn-outline-primary"
+                           title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'inventory:admin_stock' item.pk %}"
+                           class="btn btn-sm btn-outline-warning"
+                           title="Adjust Stock">
+                            <i class="bi bi-boxes"></i>
+                        </a>
+                        {% if item.item_type in 'rent,both' %}
+                        <a href="{% url 'inventory:admin_rent' item.pk %}"
+                           class="btn btn-sm btn-outline-info"
+                           title="Rent Out">
+                            <i class="bi bi-clock"></i>
+                        </a>
+                        {% endif %}
+                        {% if item.item_type in 'sale,both' %}
+                        <a href="{% url 'inventory:admin_sell' item.pk %}"
+                           class="btn btn-sm btn-outline-success"
+                           title="Record Sale">
+                            <i class="bi bi-cart-plus"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'inventory:admin_delete' item.pk %}"
+                           class="btn btn-sm btn-outline-danger"
+                           title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-4">
+                    No items found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

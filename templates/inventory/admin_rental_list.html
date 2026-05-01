@@ -1,0 +1,77 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Rental Records{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-clock-history"></i> Rental Records</h4>
+    <a href="{% url 'inventory:admin_list' %}"
+       class="btn btn-outline-secondary btn-sm">← Inventory</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}"
+                {% if status_filter == val %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+            Filter
+        </button>
+        <a href="{% url 'inventory:admin_rental_list' %}"
+           class="btn btn-sm btn-link">Clear</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Item</th><th>Customer</th><th>Rented At</th>
+                <th>Hours</th><th>Cost</th><th>Status</th><th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in rentals %}
+            <tr>
+                <td class="fw-semibold">{{ r.item.name }}</td>
+                <td>{{ r.user.full_name }}</td>
+                <td>{{ r.rented_at|date:"M d, Y g:i A" }}</td>
+                <td>{{ r.hours }}h</td>
+                <td>₱{{ r.total_cost }}</td>
+                <td>
+                    {% if r.status == 'active' %}
+                    <span class="badge bg-warning text-dark">Active</span>
+                    {% elif r.status == 'returned' %}
+                    <span class="badge bg-success">Returned</span>
+                    {% else %}
+                    <span class="badge bg-danger">Overdue</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if r.status == 'active' %}
+                    <a href="{% url 'inventory:admin_return' r.pk %}"
+                       class="btn btn-sm btn-success">
+                        <i class="bi bi-arrow-return-left"></i> Return
+                    </a>
+                    {% else %}
+                    <span class="text-muted small">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">
+                    No rental records found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -7,7 +7,14 @@
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav ms-auto">
                 {% if user.is_authenticated %}
-                    
+
+                <!-- Announcements & Dashboard -->
+                    <li class="nav-item"><a class="nav-link" href="{% url 'announcements:list' %}">News</a></li>
+
+                    {% if is_admin_or_staff %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">Dashboard</a></li>
+                    {% endif %}
+
                 <!-- Bookings -->
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'bookings:availability' %}"><i class="bi bi-calendar3"></i> Book Court</a>
@@ -25,19 +32,21 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'openplay:list' %}"><i class="bi bi-people"></i> Open Play</a>
                     </li>
-
                     {% if is_admin_or_staff %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'openplay:admin_list' %}">Open Play (Admin)</a>
                     </li>
                     {% endif %}
 
-
-                    <li class="nav-item"><a class="nav-link" href="{% url 'announcements:list' %}">News</a></li>
-                     <li class="nav-item"><a class="nav-link" href="{% url 'inventory:shop' %}">Shop</a></li>
-                     {% if is_admin_or_staff %}
-                     <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:index' %}">Dashboard</a></li>
-                     {% endif %}
+                <!-- Inventory & Shop -->
+                    <li class="nav-item"><a class="nav-link" href="{% url 'inventory:shop' %}">Shop</a></li>
+                    {% if is_admin_or_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventory:admin_list' %}"><i class="bi bi-boxes"></i> Inventory</a>
+                    </li>
+                    {% endif %}
+        
+                <!-- User Profile -->
                     <li class="nav-item"><a class="nav-link" href="{% url 'accounts:profile' %}"><i class="bi bi-person-circle"></i> {{ user.first_name }}</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'account_logout' %}">Logout</a></li>
                 {% else %}

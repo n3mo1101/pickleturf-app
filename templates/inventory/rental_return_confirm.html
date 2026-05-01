@@ -1,0 +1,42 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Return Rental{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-return-left"></i> Return Item
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush mb-3">
+                    <li class="list-group-item">
+                        <strong>Item:</strong> {{ rental.item.name }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Customer:</strong> {{ rental.user.full_name }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Rented:</strong>
+                        {{ rental.rented_at|date:"F j, Y g:i A" }}
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Total Cost:</strong> ₱{{ rental.total_cost }}
+                    </li>
+                </ul>
+                <form method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success flex-fill">
+                        <i class="bi bi-check-circle"></i> Confirm Return
+                    </button>
+                    <a href="{% url 'inventory:admin_rental_list' %}"
+                       class="btn btn-outline-secondary flex-fill">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

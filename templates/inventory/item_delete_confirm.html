@@ -1,0 +1,27 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Delete Item{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-5">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-trash"></i> Delete Item</h5>
+            </div>
+            <div class="card-body">
+                <p>Delete <strong>{{ item.name }}</strong>?
+                   This cannot be undone.</p>
+                <form method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger flex-fill">
+                        Yes, Delete
+                    </button>
+                    <a href="{% url 'inventory:admin_list' %}"
+                       class="btn btn-outline-secondary flex-fill">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
