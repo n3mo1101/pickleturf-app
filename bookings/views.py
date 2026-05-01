@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.db import models
 from courts.models import Court
 from accounts.decorators import admin_or_staff_required
 from .forms import BookingForm, AdminBookingForm
@@ -118,14 +119,41 @@ def booking_create_view(request):
 
 @login_required
 def my_bookings_view(request):
-    """Show logged-in user's booking history."""
-    bookings = (
+    """Show logged-in user's booking history with summary and pagination."""
+    from django.core.paginator import Paginator
+    from django.db.models import Sum, Count
+
+    all_bookings = (
         Booking.objects
         .filter(user=request.user)
         .select_related('court')
         .order_by('-date', '-start_time')
     )
-    return render(request, 'bookings/my_bookings.html', {'bookings': bookings})
+
+    # ── Summary ────────────────────────────────────────────────────
+    summary = all_bookings.aggregate(
+        total_bookings=Count('id'),
+        total_spent=Sum(
+            'price',
+            filter=models.Q(
+                status__in=[
+                    Booking.Status.CONFIRMED,
+                    Booking.Status.COMPLETED,
+                ]
+            )
+        )
+    )
+
+    # ── Pagination ─────────────────────────────────────────────────
+    paginator = Paginator(all_bookings, 10)
+    page      = request.GET.get('page', 1)
+    bookings  = paginator.get_page(page)
+
+    return render(request, 'bookings/my_bookings.html', {
+        'bookings':       bookings,
+        'total_bookings': summary['total_bookings'] or 0,
+        'total_spent':    summary['total_spent']    or 0,
+    })
 
 
 @login_required

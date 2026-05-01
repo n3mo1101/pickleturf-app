@@ -32,7 +32,7 @@ class Booking(models.Model):
 
     # ── Booking meta ───────────────────────────────────────────────
     status     = models.CharField(
-        max_length=20, choices=Status.choices, default=Status.CONFIRMED
+        max_length=20, choices=Status.choices, default=Status.PENDING
     )
     price      = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     notes      = models.TextField(blank=True)
