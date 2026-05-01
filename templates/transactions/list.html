@@ -1,0 +1,101 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Transaction History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-cash-stack"></i> Transaction History</h4>
+    <a href="{% url 'dashboard:export_transactions' %}"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-download"></i> Export CSV
+    </a>
+</div>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <select name="type" class="form-select form-select-sm">
+            <option value="">All Types</option>
+            {% for val, label in type_choices %}
+            <option value="{{ val }}"
+                {% if type_filter == val %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}"
+                {% if status_filter == val %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+            Filter
+        </button>
+        <a href="{% url 'transactions:list' %}"
+           class="btn btn-sm btn-link">Clear</a>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tx in transactions %}
+            <tr>
+                <td class="text-muted small">{{ tx.pk }}</td>
+                <td>
+                    {% if tx.tx_type == 'booking' %}
+                    <span class="badge bg-success">Booking</span>
+                    {% elif tx.tx_type == 'sale' %}
+                    <span class="badge bg-primary">Sale</span>
+                    {% elif tx.tx_type == 'rental' %}
+                    <span class="badge bg-warning text-dark">Rental</span>
+                    {% elif tx.tx_type == 'openplay' %}
+                    <span class="badge bg-info text-dark">Open Play</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Manual</span>
+                    {% endif %}
+                </td>
+                <td class="small">{{ tx.description|default:"—" }}</td>
+                <td class="fw-semibold text-success">₱{{ tx.amount }}</td>
+                <td>
+                    {% if tx.payment_status == 'paid' %}
+                    <span class="badge bg-success">Paid</span>
+                    {% elif tx.payment_status == 'pending' %}
+                    <span class="badge bg-warning text-dark">Pending</span>
+                    {% elif tx.payment_status == 'refunded' %}
+                    <span class="badge bg-danger">Refunded</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Waived</span>
+                    {% endif %}
+                </td>
+                <td class="text-muted small text-nowrap">
+                    {{ tx.created_at|date:"M d, Y g:i A" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    No transactions found.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

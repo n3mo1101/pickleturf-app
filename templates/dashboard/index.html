@@ -1,5 +1,599 @@
 {% extends 'layouts/base.html' %}
 {% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-left: 4px solid;
+        transition: transform .15s ease;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-card.green  { border-color: #198754; }
+    .stat-card.blue   { border-color: #0d6efd; }
+    .stat-card.yellow { border-color: #ffc107; }
+    .stat-card.red    { border-color: #dc3545; }
+    .stat-card.teal   { border-color: #0dcaf0; }
+    .stat-card.purple { border-color: #6f42c1; }
+    .chart-card { min-height: 320px; }
+</style>
+{% endblock %}
+
 {% block content %}
-<h2>Dashboard — coming in Phase 7</h2>
+
+{# ── Page Header ── #}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h4>
+        <small class="text-muted">{{ today|date:"l, F j, Y" }}</small>
+    </div>
+    <div class="dropdown">
+        <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                data-bs-toggle="dropdown">
+            <i class="bi bi-download"></i> Export CSV
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item"
+                   href="{% url 'dashboard:export_transactions' %}">
+                    <i class="bi bi-cash-stack"></i> Transactions
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   href="{% url 'dashboard:export_bookings' %}">
+                    <i class="bi bi-calendar3"></i> Bookings
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   href="{% url 'dashboard:export_rentals' %}">
+                    <i class="bi bi-clock-history"></i> Rentals
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+{# ── Summary Cards ── #}
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card green shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Today's Revenue</div>
+                <div class="fs-5 fw-bold text-success">
+                    ₱{{ today_revenue|floatformat:2 }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem;">
+                    All transactions today
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card blue shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Month Revenue</div>
+                <div class="fs-5 fw-bold text-primary">
+                    ₱{{ month_revenue|floatformat:2 }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem;">
+                    {{ today|date:"F Y" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card teal shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Bookings Today</div>
+                <div class="fs-5 fw-bold text-info">
+                    {{ bookings_today }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem;">
+                    Confirmed + completed
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card yellow shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Active Rentals</div>
+                <div class="fs-5 fw-bold text-warning">
+                    {{ active_rentals }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem;">
+                    Currently out
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card red shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Low Stock</div>
+                <div class="fs-5 fw-bold text-danger">
+                    {{ low_stock_items }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem;">
+                    Items ≤ 5 units
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-2">
+        <div class="card stat-card purple shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Pending Requests</div>
+                <div class="fs-5 fw-bold text-purple" style="color:#6f42c1;">
+                    {{ pending_openplay }}
+                </div>
+                <div class="text-muted" style="font-size:.7rem;">
+                    Open play approvals
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ── Row 1: Daily Revenue + Revenue by Type ── #}
+<div class="row g-3 mb-3">
+
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm chart-card">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-graph-up-arrow text-success"></i>
+                Daily Revenue — Last 30 Days
+            </div>
+            <div class="card-body">
+                <canvas id="dailyRevenueChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm chart-card">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-pie-chart text-primary"></i>
+                Revenue by Type
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                {% if type_data %}
+                <canvas id="revenueTypeChart" height="200"></canvas>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-bar-chart-line fs-2"></i>
+                    <p class="mt-2 small">No transactions yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ── Row 2: Monthly Revenue + Court Utilization + Day of Week ── #}
+<div class="row g-3 mb-4">
+
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm chart-card">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-bar-chart text-primary"></i>
+                Monthly Revenue — {{ today|date:"Y" }}
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyRevenueChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm chart-card">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-layout-three-columns text-info"></i>
+                Court Utilization — {{ today|date:"F" }}
+            </div>
+            <div class="card-body">
+                <canvas id="courtChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm chart-card">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-calendar-week text-warning"></i>
+                Busiest Days
+            </div>
+            <div class="card-body">
+                <canvas id="dowChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ── Row 3: Activity Tables ── #}
+<div class="row g-3">
+
+    {# Today's Bookings #}
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 fw-semibold d-flex
+                        justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-calendar-check text-success"></i>
+                    Today's Bookings
+                </span>
+                <span class="badge bg-success">{{ bookings_today }}</span>
+            </div>
+            <div class="card-body p-0">
+                {% if todays_bookings %}
+                <ul class="list-group list-group-flush">
+                    {% for b in todays_bookings %}
+                    <li class="list-group-item py-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <div class="fw-semibold small">
+                                    {{ b.court.name }}
+                                </div>
+                                <div class="text-muted"
+                                     style="font-size:.75rem;">
+                                    {{ b.user.full_name }}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="small">
+                                    {{ b.start_time|time:"g:i A" }}
+                                </div>
+                                <div class="text-success fw-semibold"
+                                     style="font-size:.75rem;">
+                                    ₱{{ b.price }}
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-3"></i>
+                    <p class="small mt-2">No bookings today.</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent border-0 text-end">
+                <a href="{% url 'bookings:admin_list' %}"
+                   class="btn btn-sm btn-outline-secondary">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# Recent Transactions #}
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-cash-stack text-primary"></i>
+                Recent Transactions
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th class="text-end">Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in recent_transactions %}
+                            <tr>
+                                <td>
+                                    {% if tx.tx_type == 'booking' %}
+                                    <span class="badge bg-success">Booking</span>
+                                    {% elif tx.tx_type == 'sale' %}
+                                    <span class="badge bg-primary">Sale</span>
+                                    {% elif tx.tx_type == 'rental' %}
+                                    <span class="badge bg-warning text-dark">
+                                        Rental
+                                    </span>
+                                    {% elif tx.tx_type == 'openplay' %}
+                                    <span class="badge bg-info text-dark">
+                                        Open Play
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Manual</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-truncate"
+                                    style="max-width:160px;"
+                                    title="{{ tx.description }}">
+                                    {{ tx.description|truncatechars:35 }}
+                                </td>
+                                <td class="text-end fw-semibold text-success small">
+                                    ₱{{ tx.amount }}
+                                </td>
+                                <td class="text-muted small text-nowrap">
+                                    {{ tx.created_at|date:"M d, g:i A" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4"
+                                    class="text-center text-muted py-3">
+                                    No transactions yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-end">
+                <a href="{% url 'transactions:list' %}"
+                   class="btn btn-sm btn-outline-secondary">
+                    View All
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# Upcoming Open Play #}
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 fw-semibold">
+                <i class="bi bi-people text-info"></i>
+                Upcoming Open Play
+            </div>
+            <div class="card-body p-0">
+                {% if upcoming_sessions %}
+                <ul class="list-group list-group-flush">
+                    {% for s in upcoming_sessions %}
+                    <li class="list-group-item py-2">
+                        <div class="fw-semibold small">{{ s.title }}</div>
+                        <div class="text-muted" style="font-size:.75rem;">
+                            {{ s.date|date:"M d" }} ·
+                            {{ s.start_time|time:"g:i A" }}
+                        </div>
+                        <div class="mt-1">
+                            <div class="progress" style="height:4px;">
+                                {% widthratio s.participants.count s.capacity 100 as pct %}
+                                <div class="progress-bar bg-success"
+                                     style="width:{{ pct }}%">
+                                </div>
+                            </div>
+                            <div class="text-muted mt-1"
+                                 style="font-size:.7rem;">
+                                {{ s.spots_remaining }} / {{ s.capacity }}
+                                spots left
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-calendar-x fs-3"></i>
+                    <p class="small mt-2">No upcoming sessions.</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent border-0 text-end">
+                <a href="{% url 'openplay:admin_list' %}"
+                   class="btn btn-sm btn-outline-secondary">
+                    Manage
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+// ── Data from Django ───────────────────────────────────────────────────────────
+const dailyLabels   = {{ daily_labels|safe }};
+const dailyData     = {{ daily_data|safe }};
+const monthlyLabels = {{ monthly_labels|safe }};
+const monthlyData   = {{ monthly_data|safe }};
+const typeLabels    = {{ type_labels|safe }};
+const typeData      = {{ type_data|safe }};
+const courtLabels   = {{ court_labels|safe }};
+const courtData     = {{ court_data|safe }};
+const dowLabels     = {{ dow_labels|safe }};
+const dowData       = {{ dow_data|safe }};
+
+// ── Shared Defaults ────────────────────────────────────────────────────────────
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size   = 12;
+Chart.defaults.color       = '#6c757d';
+
+const gridColor  = 'rgba(0,0,0,0.05)';
+const greenColor = '#198754';
+const blueColor  = '#0d6efd';
+
+// ── 1. Daily Revenue Line Chart ───────────────────────────────────────────────
+new Chart(document.getElementById('dailyRevenueChart'), {
+    type: 'line',
+    data: {
+        labels: dailyLabels,
+        datasets: [{
+            label: 'Revenue (₱)',
+            data: dailyData,
+            borderColor: greenColor,
+            backgroundColor: 'rgba(25,135,84,0.08)',
+            borderWidth: 2,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            fill: true,
+            tension: 0.3,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ₱${ctx.parsed.y.toLocaleString()}`
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: {
+                    maxTicksLimit: 10,
+                    maxRotation: 0,
+                }
+            },
+            y: {
+                beginAtZero: true,
+                grid: { color: gridColor },
+                ticks: {
+                    callback: v => '₱' + v.toLocaleString()
+                }
+            }
+        }
+    }
+});
+
+// ── 2. Revenue by Type Doughnut ────────────────────────────────────────────────
+{% if type_data %}
+new Chart(document.getElementById('revenueTypeChart'), {
+    type: 'doughnut',
+    data: {
+        labels: typeLabels,
+        datasets: [{
+            data: typeData,
+            backgroundColor: [
+                '#198754', '#0d6efd', '#ffc107',
+                '#0dcaf0', '#6f42c1',
+            ],
+            borderWidth: 2,
+            borderColor: '#fff',
+        }]
+    },
+    options: {
+        responsive: true,
+        cutout: '65%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { padding: 12, boxWidth: 12 }
+            },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ₱${ctx.parsed.toLocaleString()}`
+                }
+            }
+        }
+    }
+});
+{% endif %}
+
+// ── 3. Monthly Revenue Bar Chart ───────────────────────────────────────────────
+new Chart(document.getElementById('monthlyRevenueChart'), {
+    type: 'bar',
+    data: {
+        labels: monthlyLabels,
+        datasets: [{
+            label: 'Revenue (₱)',
+            data: monthlyData,
+            backgroundColor: 'rgba(13,110,253,0.7)',
+            borderRadius: 4,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ` ₱${ctx.parsed.y.toLocaleString()}`
+                }
+            }
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                beginAtZero: true,
+                grid: { color: gridColor },
+                ticks: { callback: v => '₱' + v.toLocaleString() }
+            }
+        }
+    }
+});
+
+// ── 4. Court Utilization Bar Chart ─────────────────────────────────────────────
+new Chart(document.getElementById('courtChart'), {
+    type: 'bar',
+    data: {
+        labels: courtLabels,
+        datasets: [{
+            label: 'Bookings',
+            data: courtData,
+            backgroundColor: 'rgba(13,202,240,0.7)',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 },
+                grid: { color: gridColor },
+            }
+        }
+    }
+});
+
+// ── 5. Day of Week Bar Chart ───────────────────────────────────────────────────
+new Chart(document.getElementById('dowChart'), {
+    type: 'bar',
+    data: {
+        labels: dowLabels,
+        datasets: [{
+            label: 'Bookings',
+            data: dowData,
+            backgroundColor: 'rgba(111,66,193,0.7)',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 },
+                grid: { color: gridColor },
+            }
+        }
+    }
+});
+</script>
 {% endblock %}
