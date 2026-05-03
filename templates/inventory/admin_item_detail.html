@@ -59,12 +59,6 @@
                         <i class="bi bi-clock"></i> Rent Out
                     </a>
                     {% endif %}
-                    {% if item.item_type in 'sale,both' %}
-                    <a href="{% url 'inventory:admin_sell' item.pk %}"
-                       class="btn btn-outline-success btn-sm">
-                        <i class="bi bi-cart-plus"></i> Record Sale
-                    </a>
-                    {% endif %}
                 </div>
             </div>
         </div>

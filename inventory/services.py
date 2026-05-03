@@ -99,6 +99,7 @@ def _create_sale_transaction(sale, created_by=None):
         tx_type=Transaction.TxType.SALE,
         amount=sale.total,
         sale=sale,
+        payment_status=Transaction.PaymentStatus.PAID,
         description=f'POS Sale – {item_summary}',
         created_by=created_by,
     )
@@ -160,6 +161,7 @@ def _create_rental_transaction(rental, created_by=None):
         tx_type=Transaction.TxType.RENTAL,
         amount=rental.total_cost,
         rental=rental,
+        payment_status=Transaction.PaymentStatus.PAID,
         description=(
             f'Rental – {rental.item.name} x {rental.hours}h '
             f'({rental.renter_name})'
