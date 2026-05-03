@@ -153,6 +153,10 @@ def _bookings_by_day_of_week():
 
 @admin_or_staff_required
 def index(request):
+    # Update booking statuses before loading dashboard data
+    from bookings.services import auto_update_booking_statuses
+    auto_update_booking_statuses()
+
     today = date.today()
     now   = timezone.now()
 

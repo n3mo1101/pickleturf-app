@@ -99,13 +99,17 @@ def create_booking(user, court, selected_date, start_time, created_by=None, note
 
 
 def _create_booking_transaction(booking):
-    """Auto-create a pending transaction when a booking is made."""
+    """
+    Auto-create a pending transaction when a booking is made.
+    It only counts toward revenue once booking is CONFIRMED.
+    """
     from transactions.models import Transaction
     Transaction.objects.create(
         user=booking.user,
         tx_type=Transaction.TxType.BOOKING,
         amount=booking.price,
         booking=booking,
+        payment_status=Transaction.PaymentStatus.WAIVED,
         description=f'Court booking – {booking.court} on {booking.date} at {booking.start_time}',
         created_by=booking.created_by,
     )
@@ -158,3 +162,51 @@ def get_available_slots_for_court(court, selected_date):
         available.append((slot_time.strftime('%H:%M:%S'), label))
 
     return available
+
+
+# ── Automatic Booking Status Update ───────────────────────────────────────────────────────────────
+
+def auto_update_booking_statuses():
+    """
+    Run on relevant page loads to keep booking statuses current.
+
+    Rules:
+      - CONFIRMED + time passed → COMPLETED, transaction → PAID
+      - PENDING   + time passed → CANCELLED, transaction stays WAIVED
+    """
+    from transactions.models import Transaction
+
+    now = timezone.now()
+
+    stale = Booking.objects.filter(
+        status__in=[Booking.Status.CONFIRMED, Booking.Status.PENDING]
+    ).select_related('court')
+
+    for booking in stale:
+        if not booking.end_time:
+            continue
+
+        end_dt = datetime.combine(booking.date, booking.end_time)
+        end_dt = timezone.make_aware(end_dt)
+
+        if end_dt > now:
+            continue   # still in the future
+
+        if booking.status == Booking.Status.CONFIRMED:
+            booking.status = Booking.Status.COMPLETED
+            booking.save(update_fields=['status'])
+
+            # Mark transaction as paid
+            try:
+                booking.transaction.payment_status = (
+                    Transaction.PaymentStatus.PAID
+                )
+                booking.transaction.save(update_fields=['payment_status'])
+            except Exception:
+                pass
+
+        elif booking.status == Booking.Status.PENDING:
+            booking.status       = Booking.Status.CANCELLED
+            booking.cancelled_at = now
+            booking.save(update_fields=['status', 'cancelled_at'])
+            # Transaction already WAIVED — no revenue impact, no change needed

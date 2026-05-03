@@ -120,6 +120,8 @@ def booking_create_view(request):
 @login_required
 def my_bookings_view(request):
     """Show logged-in user's booking history with summary and pagination."""
+    services.auto_update_booking_statuses()  # Ensure statuses are up-to-date before fetching
+
     from django.core.paginator import Paginator
     from django.db.models import Sum, Count
 
@@ -177,6 +179,7 @@ def booking_cancel_view(request, pk):
 @admin_or_staff_required
 def admin_booking_list_view(request):
     """Admin view of all bookings with filters."""
+    services.auto_update_booking_statuses()  # Keep statuses current on admin page load
     bookings = Booking.objects.select_related('court', 'user').order_by('-date', '-start_time')
 
     # Filters
@@ -299,17 +302,43 @@ def admin_booking_cancel_view(request, pk):
 
 @admin_or_staff_required
 def admin_booking_status_view(request, pk):
-    """Admin updates booking status (e.g. mark as completed/paid)."""
+    """Admin updates booking status and syncs the linked transaction."""
+    from transactions.models import Transaction
+
     booking = get_object_or_404(Booking, pk=pk)
 
     if request.method == 'POST':
         new_status = request.POST.get('status')
-        if new_status in dict(Booking.Status.choices):
-            booking.status = new_status
-            booking.save(update_fields=['status'])
-            messages.success(request, f'Booking status updated to {new_status}.')
-        else:
+
+        if new_status not in dict(Booking.Status.choices):
             messages.error(request, 'Invalid status.')
+            return redirect('bookings:admin_list')
+
+        booking.status = new_status
+        if new_status == Booking.Status.CANCELLED:
+            booking.cancelled_at = timezone.now()
+        booking.save(update_fields=['status', 'cancelled_at'])
+
+        # ── Sync linked transaction payment status ─────────────────
+        try:
+            tx = booking.transaction
+            if new_status == Booking.Status.CONFIRMED:
+                tx.payment_status = Transaction.PaymentStatus.PENDING
+            elif new_status == Booking.Status.COMPLETED:
+                tx.payment_status = Transaction.PaymentStatus.PAID
+            elif new_status == Booking.Status.CANCELLED:
+                tx.payment_status = Transaction.PaymentStatus.REFUNDED
+            else:
+                tx.payment_status = Transaction.PaymentStatus.WAIVED
+            tx.save(update_fields=['payment_status'])
+        except Exception:
+            pass   # no transaction linked — safe to ignore
+
+        messages.success(
+            request,
+            f'Booking #{pk} status updated to '
+            f'{booking.get_status_display()}.'
+        )
         return redirect('bookings:admin_list')
 
     return render(request, 'bookings/admin_booking_status.html', {
