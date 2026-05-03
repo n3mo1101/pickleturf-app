@@ -22,9 +22,13 @@ class CustomSignupForm(SignupForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model  = User
-        fields = ['first_name', 'last_name', 'phone', 'avatar']
+        fields = ['first_name', 'last_name', 'username', 'phone', 'avatar']
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name':  forms.TextInput(attrs={'class': 'form-control'}),
-            'phone':      forms.TextInput(attrs={'class': 'form-control'}),
+            'username':   forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Choose a username for login',
+            }),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
         }

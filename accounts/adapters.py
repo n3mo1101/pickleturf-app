@@ -1,22 +1,40 @@
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from django.conf import settings
 
 
 class AccountAdapter(DefaultAccountAdapter):
-    """Custom adapter: sync is_staff flag with role on save."""
 
     def save_user(self, request, user, form, commit=True):
         user = super().save_user(request, user, form, commit=False)
-        user.first_name = form.cleaned_data.get('first_name', '')
-        user.last_name  = form.cleaned_data.get('last_name', '')
+        data = form.cleaned_data
+        user.first_name = data.get('first_name', '')
+        user.last_name  = data.get('last_name', '')
+        user.phone      = data.get('phone', '')
+
+        # Auto-generate a unique username from email if not set
+        if not user.username:
+            user.username = self._generate_username(user.email)
+
         if commit:
             user.save()
         return user
 
+    def _generate_username(self, email):
+        """Generate a unique username from the email prefix."""
+        from accounts.models import User
+        base = email.split('@')[0].lower()
+        # Strip special characters
+        import re
+        base = re.sub(r'[^a-z0-9_]', '', base) or 'user'
+        username = base
+        counter  = 1
+        while User.objects.filter(username=username).exists():
+            username = f'{base}{counter}'
+            counter += 1
+        return username
+
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
-    """Populate first/last name from social provider data."""
 
     def populate_user(self, request, sociallogin, data):
         user = super().populate_user(request, sociallogin, data)
@@ -24,4 +42,14 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
             user.first_name = data.get('first_name', '')
         if not user.last_name:
             user.last_name = data.get('last_name', '')
+        return user
+
+    def save_user(self, request, sociallogin, form=None):
+        user = super().save_user(request, sociallogin, form)
+        # Auto-generate username for social signups
+        if not user.username:
+            from accounts.adapters import AccountAdapter
+            adapter = AccountAdapter()
+            user.username = adapter._generate_username(user.email)
+            user.save(update_fields=['username'])
         return user

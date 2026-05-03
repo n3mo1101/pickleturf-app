@@ -4,11 +4,16 @@
 {% block auth_title %}Welcome Back{% endblock %}
 
 {% block auth_content %}
+<p class="text-muted small text-center mb-3">
+    Sign in with your <strong>email or username</strong>
+</p>
 <form method="post">
     {% csrf_token %}
     {{ form|crispy }}
     <div class="d-flex justify-content-between align-items-center mt-1 mb-3">
-        <a href="{% url 'account_reset_password' %}" class="small">Forgot password?</a>
+        <a href="{% url 'account_reset_password' %}" class="small">
+            Forgot password?
+        </a>
     </div>
     <div class="d-grid">
         <button class="btn btn-success btn-lg" type="submit">Login</button>

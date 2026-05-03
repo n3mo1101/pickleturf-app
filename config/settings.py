@@ -125,14 +125,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# ─── ALLAUTH CONFIG ───────────────────────────────────────────────────────────
+# ─── ALLAUTH CONFIG ────────────────────────────────────────────────────────────
 
-ACCOUNT_LOGIN_METHODS             = {'email'}
+ACCOUNT_LOGIN_METHODS             = {'email', 'username'}   # ← allow both
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'              # ← point to our field
 ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION        = 'mandatory'
-ACCOUNT_UNIQUE_EMAIL              = True
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_CONFIRM_EMAIL_ON_GET      = True
+ACCOUNT_ADAPTER                   = 'accounts.adapters.AccountAdapter'
+SOCIALACCOUNT_ADAPTER             = 'accounts.adapters.SocialAccountAdapter'
+ACCOUNT_FORMS                     = {'signup': 'accounts.forms.CustomSignupForm'}
 
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
