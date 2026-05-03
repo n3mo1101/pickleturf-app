@@ -91,8 +91,12 @@
                         {% for p in participants %}
                         <tr>
                             <td>
-                                <div class="fw-semibold">{{ p.user.full_name }}</div>
+                                <div class="fw-semibold">{{ p.display_name }}</div>
+                                {% if p.user %}
                                 <div class="small text-muted">{{ p.user.email }}</div>
+                                {% else %}
+                                <div class="small text-muted fst-italic">Walk-in</div>
+                                {% endif %}
                             </td>
                             <td class="small text-muted">
                                 {{ p.joined_at|date:"M d, g:i A" }}
@@ -145,6 +149,7 @@
     </div>
 
     {# ── Add Participant ── #}
+
     <div class="col-md-4">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-success text-white">
@@ -159,7 +164,8 @@
                       action="{% url 'openplay:admin_add' session.pk %}">
                     {% csrf_token %}
                     <div class="mb-3">
-                        {{ add_form.user }}
+                        <label class="form-label fw-semibold">Participant Name</label>
+                        {{ add_form.participant_name }}
                     </div>
                     <button type="submit" class="btn btn-success w-100">
                         <i class="bi bi-person-check"></i> Add to Session

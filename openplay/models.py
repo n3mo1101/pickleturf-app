@@ -66,12 +66,18 @@ class OpenPlayParticipant(models.Model):
         on_delete=models.CASCADE,
         related_name='participants'
     )
-    user    = models.ForeignKey(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='openplay_participations'
+        related_name='openplay_participations',
+        null=True,   blank=True   # ← nullable for walk-ins
     )
-    status     = models.CharField(
+    participant_name = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Used for walk-in participants without an account.'
+    )
+    status    = models.CharField(
         max_length=20, choices=Status.choices, default=Status.PENDING
     )
     joined_at  = models.DateTimeField(auto_now_add=True)
@@ -79,11 +85,26 @@ class OpenPlayParticipant(models.Model):
     notes      = models.TextField(blank=True)
 
     class Meta:
-        unique_together = ('session', 'user')
+        # Prevent the same registered user joining same session twice.
+        # Walk-ins (user=None) are exempt from this constraint.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session', 'user'],
+                condition=models.Q(user__isnull=False),
+                name='unique_session_registered_user'
+            )
+        ]
         indexes = [models.Index(fields=['session', 'status'])]
 
     def __str__(self):
-        return f'{self.user} → {self.session} [{self.status}]'
+        return f'{self.display_name} → {self.session} [{self.status}]'
+
+    @property
+    def display_name(self):
+        """Returns the best available name for this participant."""
+        if self.user:
+            return self.user.full_name
+        return self.participant_name or 'Walk-in Guest'
 
     def clean(self):
         """Prevent joining a full or closed session."""
@@ -91,6 +112,8 @@ class OpenPlayParticipant(models.Model):
             return
         if self.session.status == OpenPlaySession.Status.CANCELLED:
             raise ValidationError('This session has been cancelled.')
-        if (self.session.is_full
-                and self.status == self.Status.APPROVED):
+        if (
+            self.session.is_full
+            and self.status == self.Status.APPROVED
+        ):
             raise ValidationError('This session is full.')

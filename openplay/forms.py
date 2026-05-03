@@ -49,9 +49,12 @@ class OpenPlaySessionForm(forms.ModelForm):
 
 
 class AddParticipantForm(forms.Form):
-    """Admin manually adds a user to a session."""
-    user = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True).order_by('email'),
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label='Select User',
+    """Admin manually adds a walk-in participant to session."""
+    participant_name = forms.CharField(
+        max_length=100,
+        label='Participant Name',
+        widget=forms.TextInput(attrs={
+            'class':       'form-control',
+            'placeholder': 'Full name of participant',
+        })
     )

@@ -206,21 +206,21 @@ def admin_reject_view(request, pk, participant_id):
 
 @admin_or_staff_required
 def admin_add_participant_view(request, pk):
-    """Admin manually adds a user directly as approved."""
+    """Admin manually adds a walk-in participant by name."""
     session = get_object_or_404(OpenPlaySession, pk=pk)
 
     if request.method == 'POST':
         form = AddParticipantForm(request.POST)
         if form.is_valid():
             try:
-                services.add_participant_manually(
+                participant = services.add_participant_manually(
                     admin_user=request.user,
                     session=session,
-                    user=form.cleaned_data['user'],
+                    participant_name=form.cleaned_data['participant_name'],
                 )
                 messages.success(
                     request,
-                    f'{form.cleaned_data["user"].full_name} added to session.'
+                    f'"{participant.display_name}" added to session.'
                 )
             except ValidationError as e:
                 messages.error(request, e.message)

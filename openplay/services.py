@@ -95,26 +95,22 @@ def reject_participant(participant):
     return participant
 
 
-def add_participant_manually(admin_user, session, user):
-    """Admin directly adds a user to a session as approved."""
+def add_participant_manually(admin_user, session, participant_name):
+    """
+    Admin directly adds a user to a session as approved.
+    Adds a walk-in participant by name.
+    """
     if session.status == OpenPlaySession.Status.CANCELLED:
         raise ValidationError('Cannot add to a cancelled session.')
-
     if session.is_full:
         raise ValidationError('Session is full.')
 
-    participant, created = OpenPlayParticipant.objects.get_or_create(
+    participant = OpenPlayParticipant.objects.create(
         session=session,
-        user=user,
-        defaults={'status': OpenPlayParticipant.Status.APPROVED}
+        user=None,
+        participant_name=participant_name.strip(),
+        status=OpenPlayParticipant.Status.APPROVED,
     )
-
-    if not created:
-        if participant.status == OpenPlayParticipant.Status.APPROVED:
-            raise ValidationError(f'{user.full_name} is already in this session.')
-        # Re-approve if previously removed/rejected
-        participant.status = OpenPlayParticipant.Status.APPROVED
-        participant.save(update_fields=['status'])
 
     session.update_status()
     _create_openplay_transaction(participant)
