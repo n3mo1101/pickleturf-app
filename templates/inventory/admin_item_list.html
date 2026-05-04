@@ -115,7 +115,7 @@
                     </span>
                 </td>
                 <td>{% if item.sale_price %}₱{{ item.sale_price }}{% else %}—{% endif %}</td>
-                <td>{% if item.rent_price %}₱{{ item.rent_price }}/hr{% else %}—{% endif %}</td>
+                <td>{% if item.rent_price %}₱{{ item.rent_price }}{% else %}—{% endif %}</td>
                 <td>
                     <span class="fw-bold
                         {% if item.stock == 0 %}text-danger
@@ -147,13 +147,6 @@
                            title="Adjust Stock">
                             <i class="bi bi-boxes"></i>
                         </a>
-                        {% if item.item_type in 'rent,both' %}
-                        <a href="{% url 'inventory:admin_rent' item.pk %}"
-                           class="btn btn-sm btn-outline-info"
-                           title="Rent Out">
-                            <i class="bi bi-clock"></i>
-                        </a>
-                        {% endif %}
                         <a href="{% url 'inventory:admin_delete' item.pk %}"
                            class="btn btn-sm btn-outline-danger"
                            title="Delete">

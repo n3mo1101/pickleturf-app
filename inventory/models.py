@@ -126,43 +126,46 @@ class SaleItem(models.Model):
 
 
 class RentalRecord(models.Model):
-    """
-    Rental record — stores renter name/contact instead of
-    a user account FK to support walk-in customers.
-    """
+
     class Status(models.TextChoices):
         ACTIVE   = 'active',   'Active'
         RETURNED = 'returned', 'Returned'
         OVERDUE  = 'overdue',  'Overdue'
 
-    item            = models.ForeignKey(
+    item           = models.ForeignKey(
         InventoryItem, on_delete=models.PROTECT, related_name='rentals'
     )
-    renter_name     = models.CharField(max_length=100)
-    renter_contact  = models.CharField(max_length=100, blank=True)
-    rented_at       = models.DateTimeField(auto_now_add=True)
-    returned_at     = models.DateTimeField(null=True, blank=True)
-    hours           = models.PositiveIntegerField(default=1)
-    total_cost      = models.DecimalField(max_digits=8, decimal_places=2, default=0)
-    status          = models.CharField(
+    quantity       = models.PositiveIntegerField(default=1)
+    renter_name    = models.CharField(max_length=100)
+    renter_contact = models.CharField(max_length=100, blank=True)
+    rented_at      = models.DateTimeField(auto_now_add=True)
+    returned_at    = models.DateTimeField(null=True, blank=True)
+    total_cost     = models.DecimalField(
+        max_digits=8, decimal_places=2, default=0
+    )
+    status         = models.CharField(
         max_length=20, choices=Status.choices, default=Status.ACTIVE
     )
-    handled_by      = models.ForeignKey(
+    handled_by     = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='rentals_handled'
     )
-    notes           = models.TextField(blank=True)
+    notes          = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-rented_at']
         indexes  = [models.Index(fields=['status', 'rented_at'])]
 
     def __str__(self):
-        return f'{self.item.name} rented to {self.renter_name} [{self.status}]'
+        return (
+            f'{self.item.name} x{self.quantity} '
+            f'rented to {self.renter_name} [{self.status}]'
+        )
 
     def save(self, *args, **kwargs):
-        if self.item.rent_price and self.hours:
-            self.total_cost = self.item.rent_price * self.hours
+        # total_cost = flat rent_price × quantity
+        if self.item.rent_price and self.quantity:
+            self.total_cost = self.item.rent_price * self.quantity
         super().save(*args, **kwargs)

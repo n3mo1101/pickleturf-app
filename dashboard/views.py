@@ -329,7 +329,7 @@ def export_rentals_csv(request):
     writer = csv.writer(response)
     writer.writerow([
         'ID', 'Item', 'Renter Name', 'Contact',
-        'Hours', 'Total Cost', 'Status',
+        'Quantity', 'Total Cost', 'Status',
         'Rented At', 'Returned At',
     ])
 
@@ -339,7 +339,7 @@ def export_rentals_csv(request):
             r.item.name,
             r.renter_name,
             r.renter_contact or '—',
-            r.hours,
+            r.quantity,
             r.total_cost,
             r.get_status_display(),
             r.rented_at.strftime('%Y-%m-%d %H:%M'),

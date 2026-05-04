@@ -23,9 +23,9 @@ urlpatterns = [
     path('admin/<int:pk>/stock/',         views.admin_stock_adjust_view,  name='admin_stock'),
 
     # Admin — Rentals
-    path('admin/rentals/',                 views.admin_rental_list_view,   name='admin_rental_list'),
-    path('admin/<int:pk>/rent/',          views.admin_rental_create_view, name='admin_rent'),
-    path('admin/rentals/<int:pk>/return/', views.admin_rental_return_view, name='admin_return'),
+    path('admin/rentals/',                  views.admin_rental_list_view,   name='admin_rental_list'),
+    path('admin/rentals/new/',              views.admin_rental_pos_view,    name='admin_rental_pos'),
+    path('admin/rentals/<int:pk>/return/',  views.admin_rental_return_view, name='admin_return'),
 
     # Admin — Categories
     path('admin/categories/',             views.admin_category_list_view,   name='admin_categories'),

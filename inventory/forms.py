@@ -69,14 +69,14 @@ class StockAdjustForm(forms.Form):
 
 class RentalCreateForm(forms.Form):
     """
-    Walk-in friendly rental form.
-    No user account required — just name + optional contact.
+    Renter info collected once at checkout.
+    Item quantities are handled in the template/view directly.
     """
     renter_name = forms.CharField(
         max_length=100,
         label='Renter Name',
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class':       'form-control',
             'placeholder': 'Full name of renter',
         }),
     )
@@ -85,17 +85,15 @@ class RentalCreateForm(forms.Form):
         required=False,
         label='Contact (optional)',
         widget=forms.TextInput(attrs={
-            'class': 'form-control',
+            'class':       'form-control',
             'placeholder': 'Phone number or email',
         }),
     )
-    hours = forms.IntegerField(
-        min_value=1,
-        initial=1,
-        label='Rental Duration (hours)',
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-    )
     notes = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows':  2,
+            'placeholder': 'Notes (optional)',
+        }),
     )

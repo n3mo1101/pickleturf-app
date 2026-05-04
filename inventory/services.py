@@ -5,7 +5,7 @@ from .models import InventoryItem, RentalRecord, Sale, SaleItem
 
 # ── Stock Adjustment ───────────────────────────────────────────────────────────
 
-def adjust_stock(item, quantity, action='deduct'):
+def adjust_stock(item, quantity, action='add'):
     """Manually adjust stock. action: 'add' or 'deduct'."""
     if action == 'deduct':
         if item.stock < quantity:
@@ -105,37 +105,98 @@ def _create_sale_transaction(sale, created_by=None):
     )
 
 
-# ── Rentals ────────────────────────────────────────────────────────────────────
+# ── Rental POS ─────────────────────────────────────────────────────────────────
 
-def create_rental(item, renter_name, hours, renter_contact='', handled_by=None):
+def process_rental(cart_items, renter_name, renter_contact='', handled_by=None):
     """
-    Create a rental record and deduct stock.
-    No user account needed — just name + optional contact.
+    Process a POS-style rental from a list of cart items.
+
+    cart_items: [{'item': InventoryItem, 'quantity': int}, ...]
+
+    Steps:
+      1. Validate all items and stock before touching anything
+      2. Create one RentalRecord per line item + deduct stock
+      3. Create one combined Transaction for the whole checkout
     """
-    if item.item_type not in (
-        InventoryItem.ItemType.RENT,
-        InventoryItem.ItemType.BOTH
-    ):
-        raise ValidationError(f'"{item.name}" is not available for rent.')
+    if not cart_items:
+        raise ValidationError('No items selected.')
 
-    if item.stock < 1:
-        raise ValidationError(f'"{item.name}" is out of stock.')
+    if not renter_name or not renter_name.strip():
+        raise ValidationError('Renter name is required.')
 
-    if not item.rent_price:
-        raise ValidationError(f'"{item.name}" has no rental price set.')
+    # ── Step 1: Validate everything first ─────────────────────────
+    for entry in cart_items:
+        item = entry['item']
+        qty  = entry['quantity']
 
-    item.deduct_stock(1)
+        if item.item_type not in (
+            InventoryItem.ItemType.RENT,
+            InventoryItem.ItemType.BOTH,
+        ):
+            raise ValidationError(
+                f'"{item.name}" is not available for rent.'
+            )
 
-    rental = RentalRecord.objects.create(
-        item=item,
-        renter_name=renter_name.strip(),
-        renter_contact=renter_contact.strip(),
-        hours=hours,
-        handled_by=handled_by,
+        if not item.rent_price:
+            raise ValidationError(
+                f'"{item.name}" has no rental price set.'
+            )
+
+        if item.stock < qty:
+            raise ValidationError(
+                f'Insufficient stock for "{item.name}". '
+                f'Available: {item.stock}, requested: {qty}.'
+            )
+
+    # ── Step 2: Create rental records + deduct stock ───────────────
+    records    = []
+    grand_total = 0
+
+    for entry in cart_items:
+        item = entry['item']
+        qty  = entry['quantity']
+
+        item.deduct_stock(qty)
+
+        record = RentalRecord.objects.create(
+            item=item,
+            quantity=qty,
+            renter_name=renter_name.strip(),
+            renter_contact=renter_contact.strip(),
+            handled_by=handled_by,
+        )
+        records.append(record)
+        grand_total += record.total_cost
+
+    # ── Step 3: One combined transaction ──────────────────────────
+    _create_rental_transaction_bulk(
+        records, grand_total, renter_name, handled_by
     )
 
-    _create_rental_transaction(rental, handled_by)
-    return rental
+    return records, grand_total
+
+
+def _create_rental_transaction_bulk(
+    records, grand_total, renter_name, handled_by=None
+):
+    """One Transaction record covering all items in a rental checkout."""
+    from transactions.models import Transaction
+
+    item_summary = ', '.join(
+        f'{r.item.name} x{r.quantity}' for r in records
+    )
+
+    Transaction.objects.create(
+        user=None,
+        tx_type=Transaction.TxType.RENTAL,
+        amount=grand_total,
+        payment_status=Transaction.PaymentStatus.PAID,
+        description=(
+            f'Rental – {item_summary} '
+            f'({renter_name})'
+        ),
+        created_by=handled_by,
+    )
 
 
 def return_rental(rental, handled_by=None):
@@ -149,22 +210,5 @@ def return_rental(rental, handled_by=None):
         rental.handled_by = handled_by
     rental.save(update_fields=['status', 'returned_at', 'handled_by'])
 
-    rental.item.add_stock(1)
+    rental.item.add_stock(rental.quantity)   # ← restore quantity, not just 1
     return rental
-
-
-def _create_rental_transaction(rental, created_by=None):
-    """Log a Transaction for a rental."""
-    from transactions.models import Transaction
-    Transaction.objects.create(
-        user=None,
-        tx_type=Transaction.TxType.RENTAL,
-        amount=rental.total_cost,
-        rental=rental,
-        payment_status=Transaction.PaymentStatus.PAID,
-        description=(
-            f'Rental – {rental.item.name} x {rental.hours}h '
-            f'({rental.renter_name})'
-        ),
-        created_by=created_by,
-    )

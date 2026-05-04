@@ -30,6 +30,6 @@ class SaleAdmin(admin.ModelAdmin):
 
 @admin.register(RentalRecord)
 class RentalRecordAdmin(admin.ModelAdmin):
-    list_display  = ('item', 'renter_name', 'renter_contact', 'hours', 'total_cost', 'status', 'rented_at')
+    list_display  = ('item', 'renter_name', 'renter_contact', 'quantity', 'total_cost', 'status', 'rented_at')
     list_filter   = ('status',)
     search_fields = ('renter_name', 'item__name')

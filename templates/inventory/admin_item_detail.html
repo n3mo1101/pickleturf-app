@@ -53,12 +53,6 @@
                        class="btn btn-outline-warning btn-sm">
                         <i class="bi bi-boxes"></i> Adjust Stock
                     </a>
-                    {% if item.item_type in 'rent,both' %}
-                    <a href="{% url 'inventory:admin_rent' item.pk %}"
-                       class="btn btn-outline-info btn-sm">
-                        <i class="bi bi-clock"></i> Rent Out
-                    </a>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -76,14 +70,14 @@
             <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <thead class="table-light">
-                        <tr><th>Customer</th><th>Rented At</th><th>Hours</th><th>Cost</th><th></th></tr>
+                        <tr><th>Customer</th><th>Rented At</th><th>Qty</th><th>Cost</th><th></th></tr>
                     </thead>
                     <tbody>
                         {% for r in active_rentals %}
                         <tr>
                             <td>{{ r.user.full_name }}</td>
                             <td>{{ r.rented_at|date:"M d, g:i A" }}</td>
-                            <td>{{ r.hours }}h</td>
+                            <td>{{ r.quantity }}h</td>
                             <td>₱{{ r.total_cost }}</td>
                             <td>
                                 <a href="{% url 'inventory:admin_return' r.pk %}"

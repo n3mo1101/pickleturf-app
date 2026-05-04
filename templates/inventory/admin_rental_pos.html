@@ -1,0 +1,274 @@
+{% extends 'layouts/base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Rental POS{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4><i class="bi bi-clock-history"></i> Rental POS</h4>
+    <a href="{% url 'inventory:admin_rental_list' %}"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-list-ul"></i> Active Rentals
+    </a>
+</div>
+
+{# Search / Filter #}
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="q"
+               class="form-control form-control-sm"
+               placeholder="Search items..."
+               value="{{ search_query }}">
+    </div>
+    <div class="col-md-3">
+        <select name="category" class="form-select form-select-sm">
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}"
+                {% if category_filter == cat.id|stringformat:"s" %}
+                    selected
+                {% endif %}>
+                {{ cat.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-search"></i> Filter
+        </button>
+        <a href="{% url 'inventory:admin_rental_pos' %}"
+           class="btn btn-sm btn-link">Clear</a>
+    </div>
+</form>
+
+<form method="post" id="rental-form">
+    {% csrf_token %}
+    <div class="row g-4">
+
+        {# ── Left: Item Grid ── #}
+        <div class="col-lg-8">
+            <div class="row g-3">
+                {% for item in items %}
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm rental-item-card"
+                         data-id="{{ item.pk }}"
+                         data-name="{{ item.name }}"
+                         data-price="{{ item.rent_price }}">
+
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}"
+                             class="card-img-top"
+                             style="height:110px;object-fit:cover;">
+                        {% else %}
+                        <div class="bg-light d-flex align-items-center
+                                    justify-content-center"
+                             style="height:110px;">
+                            <i class="bi bi-box-seam text-muted fs-2"></i>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body p-2">
+                            <div class="fw-semibold small">
+                                {{ item.name }}
+                            </div>
+                            <div class="text-warning small fw-bold">
+                                ₱{{ item.rent_price }}
+                            </div>
+                            <div class="text-muted"
+                                 style="font-size:.75rem;">
+                                Stock: {{ item.stock }}
+                            </div>
+
+                            <input
+                                type="number"
+                                name="qty_{{ item.pk }}"
+                                id="qty_{{ item.pk }}"
+                                class="form-control form-control-sm
+                                       mt-2 qty-input"
+                                min="0"
+                                max="{{ item.stock }}"
+                                value=""
+                                placeholder="Qty"
+                                {% if item.stock == 0 %}disabled{% endif %}>
+                        </div>
+
+                        {% if item.stock == 0 %}
+                        <div class="card-footer p-1 text-center
+                                    bg-danger-subtle">
+                            <small class="text-danger fw-semibold">
+                                Out of Stock
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center text-muted py-5">
+                    <i class="bi bi-box-seam" style="font-size:2.5rem;"></i>
+                    <p class="mt-2">No rentable items available.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ── Right: Checkout Panel ── #}
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm sticky-top"
+                 style="top:70px;">
+                <div class="card-header bg-dark text-white">
+                    <i class="bi bi-receipt"></i> Rental Summary
+                </div>
+
+                <div class="card-body p-0">
+                    <div id="cart-lines" class="list-group list-group-flush">
+                        <div id="cart-empty"
+                             class="list-group-item text-center
+                                    text-muted py-4">
+                            <i class="bi bi-clock fs-3"></i>
+                            <p class="mb-0 small mt-1">
+                                Enter quantities to add items
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    {# Total #}
+                    <div class="d-flex justify-content-between
+                                fw-bold fs-5 mb-3">
+                        <span>Total</span>
+                        <span class="text-warning">
+                            ₱<span id="grand-total">0.00</span>
+                        </span>
+                    </div>
+
+                    {# Renter info #}
+                    <div class="mb-2">
+                        {{ form.renter_name.label_tag }}
+                        {{ form.renter_name }}
+                        {% if form.renter_name.errors %}
+                        <div class="text-danger small">
+                            {{ form.renter_name.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-2">
+                        {{ form.renter_contact.label_tag }}
+                        {{ form.renter_contact }}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.notes.label_tag }}
+                        {{ form.notes }}
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-warning w-100 btn-lg
+                                   text-dark fw-bold"
+                            id="checkout-btn"
+                            disabled>
+                        <i class="bi bi-check-circle"></i>
+                        Process Rental
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const qtyInputs  = document.querySelectorAll('.qty-input');
+const cartLines  = document.getElementById('cart-lines');
+const cartEmpty  = document.getElementById('cart-empty');
+const grandTotal = document.getElementById('grand-total');
+const checkoutBtn = document.getElementById('checkout-btn');
+
+function updateCart() {
+    cartLines.querySelectorAll('.cart-line').forEach(el => el.remove());
+
+    let total    = 0;
+    let hasItems = false;
+
+    qtyInputs.forEach(input => {
+        const qty = parseInt(input.value) || 0;
+        if (qty <= 0) return;
+
+        const card  = input.closest('.rental-item-card');
+        const name  = card.dataset.name;
+        const price = parseFloat(card.dataset.price) || 0;
+        const sub   = price * qty;
+
+        total += sub;
+        hasItems = true;
+
+        const line = document.createElement('div');
+        line.className = 'list-group-item cart-line d-flex ' +
+                         'justify-content-between align-items-start py-2';
+        line.innerHTML = `
+            <div>
+                <div class="fw-semibold small">${name}</div>
+                <div class="text-muted" style="font-size:.75rem;">
+                    ₱${price.toLocaleString()} × ${qty}
+                </div>
+            </div>
+            <span class="fw-bold text-warning small">
+                ₱${sub.toLocaleString(
+                    undefined,
+                    {minimumFractionDigits: 2}
+                )}
+            </span>`;
+        cartLines.insertBefore(line, cartEmpty);
+    });
+
+    cartEmpty.style.display = hasItems ? 'none' : '';
+    grandTotal.textContent  = total.toLocaleString(
+        undefined, {minimumFractionDigits: 2}
+    );
+
+    checkoutBtn.disabled = !hasItems;
+    if (hasItems) {
+        checkoutBtn.textContent =
+            `Process Rental — ₱${total.toLocaleString(
+                undefined, {minimumFractionDigits: 2}
+            )}`;
+    } else {
+        checkoutBtn.innerHTML =
+            '<i class="bi bi-check-circle"></i> Process Rental';
+    }
+}
+
+qtyInputs.forEach(input => {
+    input.addEventListener('input', () => {
+        const card = input.closest('.rental-item-card');
+        const qty  = parseInt(input.value) || 0;
+        card.classList.toggle('border-warning', qty > 0);
+        card.classList.toggle('shadow',         qty > 0);
+        updateCart();
+    });
+});
+
+document.getElementById('rental-form').addEventListener('submit', e => {
+    const name = document.getElementById('id_renter_name').value.trim();
+    if (!name) {
+        e.preventDefault();
+        document.getElementById('id_renter_name').focus();
+        return;
+    }
+    const total = grandTotal.textContent;
+    if (!confirm(`Process rental for ₱${total}?`)) {
+        e.preventDefault();
+    }
+});
+</script>
+
+<style>
+    .rental-item-card {
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+    .rental-item-card:hover { transform: translateY(-2px); }
+    .rental-item-card.border-warning { border-width: 2px !important; }
+</style>
+{% endblock %}

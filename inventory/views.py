@@ -266,7 +266,93 @@ def admin_stock_adjust_view(request, pk):
 # ── Admin: Rentals ─────────────────────────────────────────────────────────────
 
 @admin_or_staff_required
+def admin_rental_pos_view(request):
+    """
+    POS-style rental terminal.
+    Admin selects items + quantities, enters renter info, processes.
+    """
+    items = InventoryItem.objects.filter(
+        is_active=True,
+        item_type__in=[
+            InventoryItem.ItemType.RENT,
+            InventoryItem.ItemType.BOTH,
+        ],
+    ).select_related('category').order_by('category__name', 'name')
+
+    category_filter = request.GET.get('category')
+    search_query    = request.GET.get('q', '').strip()
+
+    if category_filter:
+        items = items.filter(category_id=category_filter)
+    if search_query:
+        items = items.filter(name__icontains=search_query)
+
+    form = RentalCreateForm(request.POST or None)
+
+    if request.method == 'POST' and form.is_valid():
+        cart_items = []
+        errors     = []
+
+        for item in InventoryItem.objects.filter(
+            is_active=True,
+            item_type__in=[
+                InventoryItem.ItemType.RENT,
+                InventoryItem.ItemType.BOTH,
+            ]
+        ):
+            qty_str = request.POST.get(f'qty_{item.pk}', '').strip()
+            if not qty_str:
+                continue
+            try:
+                qty = int(qty_str)
+                if qty <= 0:
+                    continue
+                cart_items.append({'item': item, 'quantity': qty})
+            except ValueError:
+                errors.append(f'Invalid quantity for {item.name}.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return redirect('inventory:admin_rental_pos')
+
+        if not cart_items:
+            messages.warning(
+                request,
+                'No items selected. Enter at least one quantity.'
+            )
+            return redirect('inventory:admin_rental_pos')
+
+        try:
+            records, grand_total = services.process_rental(
+                cart_items=cart_items,
+                renter_name=form.cleaned_data['renter_name'],
+                renter_contact=form.cleaned_data.get('renter_contact', ''),
+                handled_by=request.user,
+            )
+            messages.success(
+                request,
+                f'✅ Rental processed for '
+                f'{form.cleaned_data["renter_name"]}. '
+                f'Total: ₱{grand_total}. '
+                f'{len(records)} item type(s) rented.'
+            )
+            return redirect('inventory:admin_rental_list')
+        except ValidationError as e:
+            messages.error(request, e.message)
+
+    return render(request, 'inventory/admin_rental_pos.html', {
+        'items':           items,
+        'form':            form,
+        'categories':      Category.objects.all().order_by('name'),
+        'category_filter': category_filter,
+        'search_query':    search_query,
+    })
+
+
+@admin_or_staff_required
 def admin_rental_list_view(request):
+    """Admin views all rental records."""
     rentals = RentalRecord.objects.select_related(
         'item'
     ).order_by('-rented_at')
@@ -278,8 +364,8 @@ def admin_rental_list_view(request):
         rentals = rentals.filter(status=status_filter)
     if search_query:
         rentals = rentals.filter(
-            Q(renter_name__icontains=search_query) |
-            Q(item__name__icontains=search_query) |
+            Q(renter_name__icontains=search_query)     |
+            Q(item__name__icontains=search_query)      |
             Q(renter_contact__icontains=search_query)
         )
 
@@ -292,37 +378,8 @@ def admin_rental_list_view(request):
 
 
 @admin_or_staff_required
-def admin_rental_create_view(request, pk):
-    """Record a new rental for a specific item."""
-    item = get_object_or_404(InventoryItem, pk=pk)
-    form = RentalCreateForm(request.POST or None)
-
-    if request.method == 'POST' and form.is_valid():
-        data = form.cleaned_data
-        try:
-            rental = services.create_rental(
-                item=item,
-                renter_name=data['renter_name'],
-                renter_contact=data.get('renter_contact', ''),
-                hours=data['hours'],
-                handled_by=request.user,
-            )
-            messages.success(
-                request,
-                f'Rental created for {rental.renter_name}. '
-                f'Total: ₱{rental.total_cost}.'
-            )
-            return redirect('inventory:admin_rental_list')
-        except ValidationError as e:
-            messages.error(request, e.message)
-
-    return render(request, 'inventory/rental_form.html', {
-        'form': form, 'item': item,
-    })
-
-
-@admin_or_staff_required
 def admin_rental_return_view(request, pk):
+    """Admin marks a rental record as returned."""
     rental = get_object_or_404(RentalRecord, pk=pk)
 
     if request.method == 'POST':
@@ -330,7 +387,8 @@ def admin_rental_return_view(request, pk):
             services.return_rental(rental, handled_by=request.user)
             messages.success(
                 request,
-                f'"{rental.item.name}" returned by {rental.renter_name}. '
+                f'"{rental.item.name}" x{rental.quantity} '
+                f'returned by {rental.renter_name}. '
                 f'Stock restored.'
             )
         except ValidationError as e:

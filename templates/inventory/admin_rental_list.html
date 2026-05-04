@@ -63,7 +63,7 @@
                 <th>Renter</th>
                 <th>Contact</th>
                 <th>Rented At</th>
-                <th>Hours</th>
+                <th>Qty</th>
                 <th>Cost</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -77,7 +77,7 @@
                 <td>{{ r.renter_name }}</td>
                 <td class="text-muted small">{{ r.renter_contact|default:"—" }}</td>
                 <td>{{ r.rented_at|date:"M d, Y g:i A" }}</td>
-                <td>{{ r.hours }}h</td>
+                <td>{{ r.quantity }}</td>
                 <td>₱{{ r.total_cost }}</td>
                 <td>
                     {% if r.status == 'active' %}
