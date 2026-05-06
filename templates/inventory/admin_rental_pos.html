@@ -4,11 +4,17 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-clock-history"></i> Rental POS</h4>
-    <a href="{% url 'inventory:admin_rental_list' %}"
-       class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-list-ul"></i> Active Rentals
-    </a>
+    <h4><i class="bi bi-clock-history"></i> Rent Equipment</h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:admin_pos' %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-cart3"></i> Purchase
+        </a>
+        <a href="{% url 'inventory:admin_rental_list' %}"
+        class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-list-ul"></i> Active Rentals
+        </a>
+    </div>
 </div>
 
 {# Search / Filter #}
@@ -41,140 +47,158 @@
     </div>
 </form>
 
-<form method="post" id="rental-form">
-    {% csrf_token %}
-    <div class="row g-4">
+<div class="pos-page-wrap">
+    <form method="post" id="rental-form">
+        {% csrf_token %}
+        <div class="row g-4">
 
-        {# ── Left: Item Grid ── #}
-        <div class="col-lg-8">
-            <div class="row g-3">
-                {% for item in items %}
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm rental-item-card"
-                         data-id="{{ item.pk }}"
-                         data-name="{{ item.name }}"
-                         data-price="{{ item.rent_price }}">
+            {# ── Left: Item Grid ── #}
+            <div class="col-lg-8">
+                <div class="row g-3">
+                    {% for item in items %}
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm rental-item-card"
+                            data-id="{{ item.pk }}"
+                            data-name="{{ item.name }}"
+                            data-price="{{ item.rent_price }}">
 
-                        {% if item.image %}
-                        <img src="{{ item.image.url }}"
-                             class="card-img-top"
-                             style="height:110px;object-fit:cover;">
-                        {% else %}
-                        <div class="bg-light d-flex align-items-center
-                                    justify-content-center"
-                             style="height:110px;">
-                            <i class="bi bi-box-seam text-muted fs-2"></i>
-                        </div>
-                        {% endif %}
-
-                        <div class="card-body p-2">
-                            <div class="fw-semibold small">
-                                {{ item.name }}
+                            {% if item.image %}
+                            <img src="{{ item.image.url }}"
+                                class="card-img-top"
+                                style="height:110px;object-fit:cover;">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center
+                                        justify-content-center"
+                                style="height:110px;">
+                                <i class="bi bi-box-seam text-muted fs-2"></i>
                             </div>
-                            <div class="text-warning small fw-bold">
-                                ₱{{ item.rent_price }}
+                            {% endif %}
+
+                            <div class="card-body p-2">
+                                <div class="fw-semibold small">
+                                    {{ item.name }}
+                                </div>
+                                <div class="text-warning small fw-bold">
+                                    ₱{{ item.rent_price }}
+                                </div>
+                                <div class="text-muted"
+                                    style="font-size:.75rem;">
+                                    Stock: {{ item.stock }}
+                                </div>
+
+                                <input
+                                    type="number"
+                                    name="qty_{{ item.pk }}"
+                                    id="qty_{{ item.pk }}"
+                                    class="form-control form-control-sm
+                                        mt-2 qty-input"
+                                    min="0"
+                                    max="{{ item.stock }}"
+                                    value=""
+                                    placeholder="Qty"
+                                    {% if item.stock == 0 %}disabled{% endif %}>
                             </div>
-                            <div class="text-muted"
-                                 style="font-size:.75rem;">
-                                Stock: {{ item.stock }}
+
+                            {% if item.stock == 0 %}
+                            <div class="card-footer p-1 text-center
+                                        bg-danger-subtle">
+                                <small class="text-danger fw-semibold">
+                                    Out of Stock
+                                </small>
                             </div>
-
-                            <input
-                                type="number"
-                                name="qty_{{ item.pk }}"
-                                id="qty_{{ item.pk }}"
-                                class="form-control form-control-sm
-                                       mt-2 qty-input"
-                                min="0"
-                                max="{{ item.stock }}"
-                                value=""
-                                placeholder="Qty"
-                                {% if item.stock == 0 %}disabled{% endif %}>
-                        </div>
-
-                        {% if item.stock == 0 %}
-                        <div class="card-footer p-1 text-center
-                                    bg-danger-subtle">
-                            <small class="text-danger fw-semibold">
-                                Out of Stock
-                            </small>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% empty %}
-                <div class="col-12 text-center text-muted py-5">
-                    <i class="bi bi-box-seam" style="font-size:2.5rem;"></i>
-                    <p class="mt-2">No rentable items available.</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# ── Right: Checkout Panel ── #}
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm sticky-top"
-                 style="top:70px;">
-                <div class="card-header bg-dark text-white">
-                    <i class="bi bi-receipt"></i> Rental Summary
-                </div>
-
-                <div class="card-body p-0">
-                    <div id="cart-lines" class="list-group list-group-flush">
-                        <div id="cart-empty"
-                             class="list-group-item text-center
-                                    text-muted py-4">
-                            <i class="bi bi-clock fs-3"></i>
-                            <p class="mb-0 small mt-1">
-                                Enter quantities to add items
-                            </p>
+                            {% endif %}
                         </div>
                     </div>
-                </div>
-
-                <div class="card-footer">
-                    {# Total #}
-                    <div class="d-flex justify-content-between
-                                fw-bold fs-5 mb-3">
-                        <span>Total</span>
-                        <span class="text-warning">
-                            ₱<span id="grand-total">0.00</span>
-                        </span>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="bi bi-box-seam" style="font-size:2.5rem;"></i>
+                        <p class="mt-2">No rentable items available.</p>
                     </div>
-
-                    {# Renter info #}
-                    <div class="mb-2">
-                        {{ form.renter_name.label_tag }}
-                        {{ form.renter_name }}
-                        {% if form.renter_name.errors %}
-                        <div class="text-danger small">
-                            {{ form.renter_name.errors }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="mb-2">
-                        {{ form.renter_contact.label_tag }}
-                        {{ form.renter_contact }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form.notes.label_tag }}
-                        {{ form.notes }}
-                    </div>
-
-                    <button type="submit"
-                            class="btn btn-warning w-100 btn-lg
-                                   text-dark fw-bold"
-                            id="checkout-btn"
-                            disabled>
-                        <i class="bi bi-check-circle"></i>
-                        Process Rental
-                    </button>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
 
+            {# ── Right: Checkout Panel ── #}
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm sticky-top"
+                    style="top:70px;">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-receipt"></i> Rental Summary
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div id="cart-lines" class="list-group list-group-flush">
+                            <div id="cart-empty"
+                                class="list-group-item text-center
+                                        text-muted py-4">
+                                <i class="bi bi-clock fs-3"></i>
+                                <p class="mb-0 small mt-1">
+                                    Enter quantities to add items
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        {# Total #}
+                        <div class="d-flex justify-content-between
+                                    fw-bold fs-5 mb-3">
+                            <span>Total</span>
+                            <span class="text-warning">
+                                ₱<span id="grand-total">0.00</span>
+                            </span>
+                        </div>
+
+                        {# Renter info #}
+                        <div class="mb-2">
+                            {{ form.renter_name.label_tag }}
+                            {{ form.renter_name }}
+                            {% if form.renter_name.errors %}
+                            <div class="text-danger small">
+                                {{ form.renter_name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-2">
+                            {{ form.renter_contact.label_tag }}
+                            {{ form.renter_contact }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.notes.label_tag }}
+                            {{ form.notes }}
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-warning w-100 btn-lg
+                                    text-dark fw-bold"
+                                id="checkout-btn"
+                                disabled>
+                            <i class="bi bi-check-circle"></i>
+                            Process Rental
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+    {# Mobile sticky bar #}
+    <div class="pos-sticky-bar" id="rentalStickyBar">
+        <div class="pos-sticky-total">
+            <span class="pos-sticky-label">Rental Total</span>
+            <span class="pos-sticky-amount">
+                ₱<span id="rentalStickyTotal">0.00</span>
+            </span>
+        </div>
+        <button type="submit" form="rental-form"
+                class="btn btn-warning fw-bold pos-sticky-btn"
+                id="rentalStickyBtn" disabled>
+            <i class="bi bi-check-circle me-1"></i>
+            Process
+        </button>
     </div>
-</form>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -237,6 +261,13 @@ function updateCart() {
         checkoutBtn.innerHTML =
             '<i class="bi bi-check-circle"></i> Process Rental';
     }
+
+    const rStickyTotal = document.getElementById('rentalStickyTotal');
+    const rStickyBtn   = document.getElementById('rentalStickyBtn');
+    if (rStickyTotal) rStickyTotal.textContent = total.toLocaleString(
+        undefined, { minimumFractionDigits: 2 }
+    );
+    if (rStickyBtn) rStickyBtn.disabled = !hasItems;
 }
 
 qtyInputs.forEach(input => {

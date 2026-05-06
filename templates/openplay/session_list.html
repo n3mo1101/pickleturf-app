@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4><i class="bi bi-people-fill"></i> Open Play Sessions</h4>
+    <h4><i class="bi bi-people-fill"></i> Open Play</h4>
     {% if is_admin_or_staff %}
     <a href="{% url 'openplay:admin_list' %}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-gear"></i> Manage Sessions
@@ -101,7 +101,7 @@
 {% if past %}
 <h5 class="text-muted mb-3">Past Sessions</h5>
 <div class="table-responsive">
-    <table class="table table-sm text-muted">
+    <table class="table table-sm text-muted table-card-mobile">
         <thead>
             <tr>
                 <th>Title</th><th>Date</th><th>Time</th><th>Status</th>
@@ -110,10 +110,10 @@
         <tbody>
             {% for s in past %}
             <tr>
-                <td>{{ s.title }}</td>
-                <td>{{ s.date|date:"M d, Y" }}</td>
-                <td>{{ s.start_time|time:"g:i A" }}</td>
-                <td>
+                <td data-label="Title">{{ s.title }}</td>
+                <td data-label="Date">{{ s.date|date:"M d, Y" }}</td>
+                <td data-label="Time">{{ s.start_time|time:"g:i A" }}</td>
+                <td data-label="Status">
                     <span class="badge
                         {% if s.status == 'completed' %}bg-secondary
                         {% else %}bg-danger{% endif %}">

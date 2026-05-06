@@ -39,7 +39,7 @@
 </form>
 
 <div class="table-responsive">
-    <table class="table table-hover table-sm align-middle">
+    <table class="table table-hover table-sm align-middle table-card-mobile">
         <thead class="table-dark">
             <tr>
                 <th>#</th>
@@ -55,23 +55,23 @@
         <tbody>
             {% for b in bookings %}
             <tr>
-                <td class="text-muted">{{ b.id }}</td>
-                <td>
+                <td data-label="#"class="text-muted">{{ b.id }}</td>
+                <td data-label="Customer">
                     <span class="fw-semibold">{{ b.user.full_name }}</span><br>
                     <small class="text-muted">{{ b.user.email }}</small>
                 </td>
-                <td>{{ b.court.name }}</td>
-                <td>{{ b.date|date:"M d, Y" }}</td>
-                <td class="text-nowrap">{{ b.start_time|time:"g:i A" }} – {{ b.end_time|time:"g:i A" }}</td>
-                <td>₱{{ b.price }}</td>
-                <td>
+                <td data-label="Court">{{ b.court.name }}</td>
+                <td data-label="Date"> {{ b.date|date:"M d, Y" }}</td>
+                <td data-label="Time" class="text-nowrap">{{ b.start_time|time:"g:i A" }} – {{ b.end_time|time:"g:i A" }}</td>
+                <td data-label="Price">₱{{ b.price }}</td>
+                <td data-label="Status">
                     {% if b.status == 'confirmed' %}<span class="badge bg-success">Confirmed</span>
                     {% elif b.status == 'cancelled' %}<span class="badge bg-danger">Cancelled</span>
                     {% elif b.status == 'completed' %}<span class="badge bg-secondary">Completed</span>
                     {% else %}<span class="badge bg-warning text-dark">{{ b.get_status_display }}</span>
                     {% endif %}
                 </td>
-                <td>
+                <td data-label="Actions" class="td-actions">
                     <div class="d-flex gap-1">
                         <a href="{% url 'bookings:admin_status' b.pk %}"
                            class="btn btn-xs btn-outline-primary btn-sm">

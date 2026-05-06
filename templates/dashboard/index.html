@@ -57,88 +57,52 @@
 </div>
 
 {# ── Summary Cards ── #}
-<div class="row g-3 mb-4">
+<div class="pt-stat-grid mb-4">
 
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card green shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-1">Today's Revenue</div>
-                <div class="fs-5 fw-bold text-success">
-                    ₱{{ today_revenue|floatformat:2 }}
-                </div>
-                <div class="text-muted" style="font-size:.7rem;">
-                    All transactions today
-                </div>
+    <div class="card pt-stat-card green shadow-sm border-0 fade-in-up">
+        <div class="card-body">
+            <div class="text-muted small mb-1">Today's Revenue</div>
+            <div class="fs-5 fw-bold text-success">
+                ₱{{ today_revenue|floatformat:2 }}
+            </div>
+            <div class="text-muted" style="font-size:.7rem;">
+                All transactions today
             </div>
         </div>
     </div>
 
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card blue shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-1">Month Revenue</div>
-                <div class="fs-5 fw-bold text-primary">
-                    ₱{{ month_revenue|floatformat:2 }}
-                </div>
-                <div class="text-muted" style="font-size:.7rem;">
-                    {{ today|date:"F Y" }}
-                </div>
+    <div class="card pt-stat-card blue shadow-sm border-0 fade-in-up">
+        <div class="card-body">
+            <div class="text-muted small mb-1">Month Revenue</div>
+            <div class="fs-5 fw-bold text-primary">
+                ₱{{ month_revenue|floatformat:2 }}
+            </div>
+            <div class="text-muted" style="font-size:.7rem;">
+                {{ today|date:"F Y" }}
             </div>
         </div>
     </div>
 
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card teal shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-1">Bookings Today</div>
-                <div class="fs-5 fw-bold text-info">
-                    {{ bookings_today }}
-                </div>
-                <div class="text-muted" style="font-size:.7rem;">
-                    Confirmed + completed
-                </div>
+    <div class="card pt-stat-card yellow shadow-sm border-0 fade-in-up">
+        <div class="card-body">
+            <div class="text-muted small mb-1">Bookings Today</div>
+            <div class="fs-5 fw-bold text-warning">
+                {{ bookings_today }}
+            </div>
+            <div class="text-muted" style="font-size:.7rem;">
+                Confirmed + completed
             </div>
         </div>
     </div>
 
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card yellow shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-1">Active Rentals</div>
-                <div class="fs-5 fw-bold text-warning">
-                    {{ active_rentals }}
-                </div>
-                <div class="text-muted" style="font-size:.7rem;">
-                    Currently out
-                </div>
+    <div class="card pt-stat-card red shadow-sm border-0 fade-in-up">
+        <div class="card-body">
+            <div class="text-muted small mb-1">Active Rentals</div>
+            <div class="fs-5 fw-bold text-danger">
+                {{ active_rentals }}
             </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card red shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-1">Low Stock</div>
-                <div class="fs-5 fw-bold text-danger">
-                    {{ low_stock_items }}
-                </div>
-                <div class="text-muted" style="font-size:.7rem;">
-                    Items ≤ 5 units
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 col-lg-2">
-        <div class="card stat-card purple shadow-sm border-0 h-100">
-            <div class="card-body">
-                <div class="text-muted small mb-1">Pending Requests</div>
-                <div class="fs-5 fw-bold text-purple" style="color:#6f42c1;">
-                    {{ pending_openplay }}
-                </div>
-                <div class="text-muted" style="font-size:.7rem;">
-                    Open play approvals
-                </div>
+            <div class="text-muted" style="font-size:.7rem;">
+                Currently out
             </div>
         </div>
     </div>
@@ -289,7 +253,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
+                    <table class="table table-sm mb-0 table-card-mobile">
                         <thead class="table-light">
                             <tr>
                                 <th>Type</th>
@@ -301,7 +265,7 @@
                         <tbody>
                             {% for tx in recent_transactions %}
                             <tr>
-                                <td>
+                                <td data-label="Type">
                                     {% if tx.tx_type == 'booking' %}
                                     <span class="badge bg-success">Booking</span>
                                     {% elif tx.tx_type == 'sale' %}
@@ -318,15 +282,15 @@
                                     <span class="badge bg-secondary">Manual</span>
                                     {% endif %}
                                 </td>
-                                <td class="small text-truncate"
+                                <td data-label="Description" class="small text-truncate"
                                     style="max-width:160px;"
                                     title="{{ tx.description }}">
                                     {{ tx.description|truncatechars:35 }}
                                 </td>
-                                <td class="text-end fw-semibold text-success small">
+                                <td data-label="Amount" class="text-end fw-semibold text-success small">
                                     ₱{{ tx.amount }}
                                 </td>
-                                <td class="text-muted small text-nowrap">
+                                <td data-label="Date" class="text-muted small text-nowrap">
                                     {{ tx.created_at|date:"M d, g:i A" }}
                                 </td>
                             </tr>
@@ -351,7 +315,7 @@
         </div>
     </div>
 
-    {# Upcoming Open Play #}
+        {# Upcoming Open Play #}
     <div class="col-lg-3">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-white border-0 fw-semibold">
@@ -477,38 +441,38 @@ new Chart(document.getElementById('dailyRevenueChart'), {
 });
 
 // ── 2. Revenue by Type Doughnut ────────────────────────────────────────────────
-{% if type_data %}
-new Chart(document.getElementById('revenueTypeChart'), {
-    type: 'doughnut',
-    data: {
-        labels: typeLabels,
-        datasets: [{
-            data: typeData,
-            backgroundColor: [
-                '#198754', '#0d6efd', '#ffc107',
-                '#0dcaf0', '#6f42c1',
-            ],
-            borderWidth: 2,
-            borderColor: '#fff',
-        }]
-    },
-    options: {
-        responsive: true,
-        cutout: '65%',
-        plugins: {
-            legend: {
-                position: 'bottom',
-                labels: { padding: 12, boxWidth: 12 }
-            },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` ₱${ctx.parsed.toLocaleString()}`
+if (typeData && typeData.length > 0) {
+    new Chart(document.getElementById('revenueTypeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                data: typeData,
+                backgroundColor: [
+                    '#198754', '#0d6efd', '#ffc107',
+                    '#0dcaf0', '#6f42c1',
+                ],
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { padding: 12, boxWidth: 12 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ₱${ctx.parsed.toLocaleString()}`
+                    }
                 }
             }
         }
-    }
-});
-{% endif %}
+    });
+}
 
 // ── 3. Monthly Revenue Bar Chart ───────────────────────────────────────────────
 new Chart(document.getElementById('monthlyRevenueChart'), {

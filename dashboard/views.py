@@ -185,13 +185,15 @@ def index(request):
         status=RentalRecord.Status.ACTIVE
     ).count()
 
-    low_stock_items = InventoryItem.objects.filter(
-        stock__lte=5, is_active=True
-    ).count()
+# Summary card functions for low stock and pending openplau requests
 
-    pending_openplay = OpenPlayParticipant.objects.filter(
-        status=OpenPlayParticipant.Status.PENDING
-    ).count()
+    # low_stock_items = InventoryItem.objects.filter(
+    #     stock__lte=5, is_active=True
+    # ).count()
+
+    # pending_openplay = OpenPlayParticipant.objects.filter(
+    #     status=OpenPlayParticipant.Status.PENDING
+    # ).count()
 
     # ── Chart Data ─────────────────────────────────────────────────
     daily_labels,   daily_data   = _daily_revenue_last_30()
@@ -235,8 +237,8 @@ def index(request):
         'month_revenue':    month_revenue,
         'bookings_today':   bookings_today,
         'active_rentals':   active_rentals,
-        'low_stock_items':  low_stock_items,
-        'pending_openplay': pending_openplay,
+        # 'low_stock_items':  low_stock_items,
+        # 'pending_openplay': pending_openplay,
 
         # Charts (passed as Python lists — serialized in template)
         'daily_labels':   daily_labels,

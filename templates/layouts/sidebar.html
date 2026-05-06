@@ -3,8 +3,7 @@
 
     {# ── Brand ── #}
     <a href="{% if is_admin_or_staff %}{% url 'dashboard:index' %}{% else %}{% url 'core:home' %}{% endif %}"
-       class="pt-brand">
-        <img src="{% static 'img/logo.png' %}" alt="PickleTurf" class="pt-brand-logo">
+    class="pt-brand">
         <span class="pt-brand-name">Pickle<span>Turf</span></span>
     </a>
 
@@ -93,10 +92,6 @@
             <a href="{% url 'inventory:admin_rental_pos' %}"
                class="pt-submenu-link {% if 'rentals/new' in request.path %}active{% endif %}">
                 Rent
-            </a>
-            <a href="{% url 'inventory:shop' %}"
-               class="pt-submenu-link {% if request.path == '/inventory/shop/' %}active{% endif %}">
-                Products
             </a>
         </div>
 

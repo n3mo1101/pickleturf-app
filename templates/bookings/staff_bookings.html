@@ -19,7 +19,7 @@
 {% if bookings %}
 <div class="card">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0 table-card-mobile">
             <thead class="table-dark">
                 <tr>
                     <th>#</th>
@@ -34,8 +34,8 @@
             <tbody>
                 {% for b in bookings %}
                 <tr>
-                    <td class="text-muted small">{{ b.id }}</td>
-                    <td>
+                    <td data-label="#" class="text-muted small">{{ b.id }}</td>
+                    <td data-label="Customer">
                         <div class="fw-semibold small">
                             {{ b.user.full_name }}
                         </div>
@@ -43,12 +43,12 @@
                             {{ b.user.email }}
                         </div>
                     </td>
-                    <td>{{ b.court.name }}</td>
-                    <td>{{ b.date|date:"M d, Y" }}</td>
-                    <td class="text-nowrap">
+                    <td data-label="Court">{{ b.court.name }}</td>
+                    <td data-label="Date">{{ b.date|date:"M d, Y" }}</td>
+                    <td data-label="Time" class="text-nowrap">
                         {{ b.start_time|time:"g:i A" }}
                     </td>
-                    <td>
+                    <td data-label="Status">
                         {% if b.status == 'confirmed' %}
                         <span class="badge bg-success">Confirmed</span>
                         {% elif b.status == 'pending' %}
@@ -61,7 +61,7 @@
                         </span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-label="Actions" class="td-actions">
                         <a href="{% url 'bookings:admin_status' b.pk %}"
                            class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-pencil"></i>

@@ -125,6 +125,27 @@
             </div>
         </div>
 
+        {# ── Confirmed Participants ── #}
+        {% if approved %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <strong><i class="bi bi-people-fill"></i> Confirmed Participants</strong>
+                <span class="badge bg-success ms-1">{{ approved|length }}</span>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for p in approved %}
+                <li class="list-group-item d-flex align-items-center gap-2">
+                    <div class="bg-success text-white rounded-circle d-flex align-items-center
+                                justify-content-center" style="width:32px;height:32px;font-size:.8rem;">
+                        {{ p.user.first_name|first|upper }}
+                    </div>
+                    <span>{{ p.user.full_name }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="mt-3">
             <a href="{% url 'openplay:list' %}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left"></i> Back to Sessions

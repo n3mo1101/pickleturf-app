@@ -3,15 +3,15 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-cart3"></i> Point of Sale</h4>
+    <h4><i class="bi bi-cart3"></i> Purchase Product</h4>
     <div class="d-flex gap-2">
+        <a href="{% url 'inventory:admin_rental_pos' %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-clock-history"></i> Rent
+        </a>
         <a href="{% url 'inventory:admin_sale_list' %}"
            class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-clock-history"></i> Sale History
-        </a>
-        <a href="{% url 'inventory:admin_list' %}"
-           class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-boxes"></i> Inventory
+            <i class="bi bi-list-ul"></i> Sale History
         </a>
     </div>
 </div>
@@ -43,109 +43,126 @@
     </div>
 </form>
 
-<form method="post" id="pos-form">
-    {% csrf_token %}
-    <div class="row g-4">
+<div class="pos-page-wrap">
+    <form method="post" id="pos-form">
+        {% csrf_token %}
+        <div class="row g-4">
 
-        {# ── Left: Item Grid ── #}
-        <div class="col-lg-8">
-            <div class="row g-3">
-                {% for item in items %}
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm pos-item-card"
-                         data-id="{{ item.pk }}"
-                         data-name="{{ item.name }}"
-                         data-price="{{ item.sale_price }}"
-                         data-stock="{{ item.stock }}">
+            {# ── Left: Item Grid ── #}
+            <div class="col-lg-8">
+                <div class="row g-3">
+                    {% for item in items %}
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm pos-item-card"
+                            data-id="{{ item.pk }}"
+                            data-name="{{ item.name }}"
+                            data-price="{{ item.sale_price }}"
+                            data-stock="{{ item.stock }}">
 
-                        {% if item.image %}
-                        <img src="{{ item.image.url }}" class="card-img-top"
-                             style="height:110px;object-fit:cover;">
-                        {% else %}
-                        <div class="bg-light d-flex align-items-center
-                                    justify-content-center"
-                             style="height:110px;">
-                            <i class="bi bi-box-seam text-muted fs-2"></i>
-                        </div>
-                        {% endif %}
-
-                        <div class="card-body p-2">
-                            <div class="fw-semibold small">{{ item.name }}</div>
-                            <div class="text-success small fw-bold">
-                                ₱{{ item.sale_price }}
+                            {% if item.image %}
+                            <img src="{{ item.image.url }}" class="card-img-top"
+                                style="height:110px;object-fit:cover;">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center
+                                        justify-content-center"
+                                style="height:110px;">
+                                <i class="bi bi-box-seam text-muted fs-2"></i>
                             </div>
-                            <div class="text-muted" style="font-size:.75rem;">
-                                Stock: {{ item.stock }}
+                            {% endif %}
+
+                            <div class="card-body p-2">
+                                <div class="fw-semibold small">{{ item.name }}</div>
+                                <div class="text-success small fw-bold">
+                                    ₱{{ item.sale_price }}
+                                </div>
+                                <div class="text-muted" style="font-size:.75rem;">
+                                    Stock: {{ item.stock }}
+                                </div>
+
+                                {# Hidden input for form submission #}
+                                <input type="number"
+                                    name="qty_{{ item.pk }}"
+                                    id="qty_{{ item.pk }}"
+                                    class="form-control form-control-sm mt-2 qty-input"
+                                    min="0"
+                                    max="{{ item.stock }}"
+                                    value=""
+                                    placeholder="Qty"
+                                    {% if item.stock == 0 %}disabled{% endif %}>
                             </div>
 
-                            {# Hidden input for form submission #}
-                            <input type="number"
-                                   name="qty_{{ item.pk }}"
-                                   id="qty_{{ item.pk }}"
-                                   class="form-control form-control-sm mt-2 qty-input"
-                                   min="0"
-                                   max="{{ item.stock }}"
-                                   value=""
-                                   placeholder="Qty"
-                                   {% if item.stock == 0 %}disabled{% endif %}>
-                        </div>
-
-                        {% if item.stock == 0 %}
-                        <div class="card-footer p-1 text-center bg-danger-subtle">
-                            <small class="text-danger fw-semibold">Out of Stock</small>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% empty %}
-                <div class="col-12 text-center text-muted py-5">
-                    <i class="bi bi-box-seam" style="font-size:2.5rem;"></i>
-                    <p class="mt-2">No items available for sale.</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        {# ── Right: Cart Summary ── #}
-        <div class="col-lg-4">
-            <div class="card border-0 shadow-sm sticky-top" style="top:70px;">
-                <div class="card-header bg-dark text-white">
-                    <i class="bi bi-receipt"></i> Order Summary
-                </div>
-                <div class="card-body p-0">
-                    <div id="cart-lines" class="list-group list-group-flush">
-                        <div id="cart-empty" class="list-group-item text-center
-                                                     text-muted py-4">
-                            <i class="bi bi-cart-x fs-3"></i>
-                            <p class="mb-0 small mt-1">
-                                Enter quantities to add items
-                            </p>
+                            {% if item.stock == 0 %}
+                            <div class="card-footer p-1 text-center bg-danger-subtle">
+                                <small class="text-danger fw-semibold">Out of Stock</small>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                        <span>Total</span>
-                        <span class="text-success">
-                            ₱<span id="grand-total">0.00</span>
-                        </span>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="bi bi-box-seam" style="font-size:2.5rem;"></i>
+                        <p class="mt-2">No items available for sale.</p>
                     </div>
-                    <div class="mb-2">
-                        <textarea name="notes" class="form-control form-control-sm"
-                                  rows="2"
-                                  placeholder="Notes (optional)"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success w-100 btn-lg"
-                            id="checkout-btn" disabled>
-                        <i class="bi bi-check-circle"></i>
-                        Process Sale
-                    </button>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
 
+            {# ── Right: Cart Summary ── #}
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm sticky-top" style="top:70px;">
+                    <div class="card-header bg-dark text-white">
+                        <i class="bi bi-receipt"></i> Order Summary
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="cart-lines" class="list-group list-group-flush">
+                            <div id="cart-empty" class="list-group-item text-center
+                                                        text-muted py-4">
+                                <i class="bi bi-cart-x fs-3"></i>
+                                <p class="mb-0 small mt-1">
+                                    Enter quantities to add items
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                            <span>Total</span>
+                            <span class="text-success">
+                                ₱<span id="grand-total">0.00</span>
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <textarea name="notes" class="form-control form-control-sm"
+                                    rows="2"
+                                    placeholder="Notes (optional)"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100 btn-lg"
+                                id="checkout-btn" disabled>
+                            <i class="bi bi-check-circle"></i>
+                            Process Sale
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {# ── Mobile Sticky Checkout Bar ── #}
+    <div class="pos-sticky-bar" id="posStickyBar">
+        <div class="pos-sticky-total">
+            <span class="pos-sticky-label">Total</span>
+            <span class="pos-sticky-amount">
+                ₱<span id="stickyTotal">0.00</span>
+            </span>
+        </div>
+        <button type="submit" form="pos-form"
+                class="btn btn-warning fw-bold pos-sticky-btn"
+                id="stickyCheckoutBtn" disabled>
+            <i class="bi bi-check-circle me-1"></i>
+            Checkout
+        </button>
     </div>
-</form>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -199,6 +216,19 @@ function updateCart() {
         undefined, {minimumFractionDigits: 2}
     );
     checkoutBtn.disabled = !hasItems;
+
+    // ── Sync mobile sticky bar ──
+    const stickyTotal = document.getElementById('stickyTotal');
+    const stickyBtn   = document.getElementById('stickyCheckoutBtn');
+    const stickyBar   = document.getElementById('posStickyBar');
+
+    if (stickyTotal) stickyTotal.textContent = total.toLocaleString(
+        undefined, { minimumFractionDigits: 2 }
+    );
+    if (stickyBtn)  stickyBtn.disabled = !hasItems;
+    if (stickyBar)  stickyBar.style.borderTopColor = hasItems
+        ? 'var(--pt-yellow)'
+        : 'var(--border)';
 }
 
 // Highlight card when qty is entered

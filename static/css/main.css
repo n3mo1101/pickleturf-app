@@ -1,6 +1,6 @@
 /* ============================================================
    PICKLETURF — MAIN STYLESHEET
-   Navy #1B2A4A · Yellow #F5C518 · Font: Barlow
+   Navy #1B2A4A · Yellow #F5C518 · Font: Trebuchet MS
    ============================================================ */
 
 /* ── 1. CSS Variables ──────────────────────────────────────── */
@@ -13,7 +13,7 @@
   --pt-yellow-pale: #FEF9E1;
 
   /* Light mode */
-  --bg:          #EEF2F9;
+  --bg:          #F8F8F6;
   --bg-card:     #FFFFFF;
   --bg-input:    #FFFFFF;
   --text:        #1B2A4A;
@@ -49,8 +49,8 @@
   --bg:         #0C1628;
   --bg-card:    #162035;
   --bg-input:   #1C2B44;
-  --text:       #DCE6F5;
-  --text-muted: #7A90B0;
+  --text:       #e7ecf3;
+  --text-muted: #d8e2f0;
   --border:     #243450;
   --shadow:     0 2px 12px rgba(0,0,0,0.35);
   --shadow-lg:  0 6px 28px rgba(0,0,0,0.45);
@@ -64,7 +64,7 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Barlow', system-ui, sans-serif;
+  font-family: 'Outfit', system-ui, sans-serif;
   font-size: 15px;
   background: var(--bg);
   color: var(--text);
@@ -73,7 +73,7 @@ body {
 }
 
 h1,h2,h3,h4,h5,h6 {
-  font-family: 'Barlow Condensed', 'Barlow', sans-serif;
+  font-family: 'Outfit', system-ui, sans-serif;
   font-weight: 700;
   color: var(--text);
   letter-spacing: .01em;
@@ -142,28 +142,21 @@ a:hover { color: var(--pt-navy); }
 
 /* Sidebar Brand */
 .pt-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 20px 18px 16px;
-  border-bottom: 1px solid var(--sb-border);
-  text-decoration: none !important;
-}
-.pt-brand-logo {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--pt-yellow);
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 18px 20px;
+    border-bottom: 1px solid var(--sb-border);
+    text-decoration: none !important;
 }
 .pt-brand-name {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 800;
-  font-size: 1.25rem;
-  letter-spacing: .03em;
-  color: #fff;
-  line-height: 1;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.45rem;
+    letter-spacing: .04em;
+    color: #fff;
+    line-height: 1;
+    text-align: center;
 }
 .pt-brand-name span { color: var(--pt-yellow); }
 
@@ -348,7 +341,7 @@ a:hover { color: var(--pt-navy); }
   border: 2px solid var(--pt-yellow);
 }
 .pt-topbar-name {
-  font-family: 'Barlow Condensed', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-weight: 800;
   font-size: 1.1rem;
   color: #fff;
@@ -432,7 +425,7 @@ a:hover { color: var(--pt-navy); }
 
 /* ── 9. Buttons ────────────────────────────────────────────── */
 .btn {
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Outfit', sans-serif;
   font-weight: 600;
   border-radius: var(--r-sm) !important;
   transition: all .18s;
@@ -914,3 +907,285 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
 .rental-item-card { transition: all .12s ease; cursor: pointer; }
 .rental-item-card:hover { transform: translateY(-2px); }
 .rental-item-card.border-warning { border-color: var(--pt-yellow) !important; border-width: 2px !important; }
+
+
+/* ============================================================
+   PATCH: Dark Mode Text · Table Cards · POS Mobile · Auth Fix
+   ============================================================ */
+
+/* ── 1. Dark Mode Text Fixes ──────────────────────────────── */
+
+/* General text inside cards */
+[data-theme="dark"] .card-body,
+[data-theme="dark"] .card-body p,
+[data-theme="dark"] .card-body span,
+[data-theme="dark"] .card-body div,
+[data-theme="dark"] .card-body small,
+[data-theme="dark"] .card-body label {
+    color: var(--text);
+}
+
+/* Muted text */
+[data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+
+/* Table cells */
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th,
+[data-theme="dark"] .table tbody tr td {
+    color: var(--text) !important;
+}
+
+/* List group items */
+[data-theme="dark"] .list-group-item {
+    background: var(--bg-card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+[data-theme="dark"] .list-group-item *:not(.badge) {
+    color: inherit;
+}
+
+/* Alert text */
+[data-theme="dark"] .alert { color: var(--text); }
+
+/* Form labels */
+[data-theme="dark"] .form-label,
+[data-theme="dark"] label { color: var(--text) !important; }
+
+/* Crispy form help text */
+[data-theme="dark"] .form-text,
+[data-theme="dark"] .helptext { color: var(--text-muted) !important; }
+
+/* Stat cards */
+[data-theme="dark"] .pt-stat-card .text-muted { color: var(--text-muted) !important; }
+[data-theme="dark"] .pt-stat-card * { color: var(--text); }
+[data-theme="dark"] .pt-stat-card .text-success { color: #4ade80 !important; }
+[data-theme="dark"] .pt-stat-card .text-primary { color: #60a5fa !important; }
+[data-theme="dark"] .pt-stat-card .text-warning { color: var(--pt-yellow) !important; }
+[data-theme="dark"] .pt-stat-card .text-info    { color: #38bdf8 !important; }
+
+/* Dashboard chart cards */
+[data-theme="dark"] .card-header.bg-white {
+    background: var(--bg-card) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Page headers */
+[data-theme="dark"] h1,[data-theme="dark"] h2,
+[data-theme="dark"] h3,[data-theme="dark"] h4,
+[data-theme="dark"] h5,[data-theme="dark"] h6 {
+    color: var(--text);
+}
+
+/* fw-bold, fw-semibold spans */
+[data-theme="dark"] .fw-bold,
+[data-theme="dark"] .fw-semibold { color: inherit; }
+
+/* Input placeholder */
+[data-theme="dark"] ::placeholder { color: var(--text-muted) !important; opacity: 1; }
+
+/* Progress bar bg */
+[data-theme="dark"] .progress { background: var(--border); }
+
+/* Availability grid */
+[data-theme="dark"] .table-bordered td,
+[data-theme="dark"] .table-bordered th {
+    border-color: var(--border) !important;
+}
+
+/* Topbar icon color on dark */
+[data-theme="dark"] .pt-topbar { background: var(--pt-navy-dark); }
+
+
+/* ── 2. Responsive Table → Card Layout ────────────────────── */
+
+/*
+  HOW IT WORKS:
+  On mobile (< 768px), hide the thead and turn each <tr> into
+  a styled card. Each <td> becomes a block row with a label
+  pulled from data-label attribute set on the td.
+*/
+
+@media (max-width: 767.98px) {
+
+    .table-card-mobile thead {
+        display: none !important;
+    }
+
+    .table-card-mobile,
+    .table-card-mobile tbody,
+    .table-card-mobile tr,
+    .table-card-mobile td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .table-card-mobile tbody tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--r) !important;
+        margin-bottom: 10px;
+        padding: 4px 0;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-card-mobile tbody tr:hover > * {
+        background: transparent !important;
+    }
+
+    .table-card-mobile td {
+        padding: 10px 16px !important;
+        border-bottom: 1px solid var(--border) !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        text-align: right !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        min-height: 44px;
+        gap: 8px;
+    }
+
+    .table-card-mobile td:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Label from data-label attr */
+    .table-card-mobile td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted);
+        text-align: left;
+        flex-shrink: 0;
+        margin-right: 8px;
+    }
+
+    /* Special: action column — full width centered */
+    .table-card-mobile td.td-actions {
+        justify-content: flex-end !important;
+    }
+    .table-card-mobile td.td-actions::before {
+        display: none !important;
+    }
+
+    /* Special: first cell gets a yellow left border accent */
+    .table-card-mobile td:first-child {
+        border-left: 4px solid var(--pt-yellow) !important;
+        font-weight: 600;
+    }
+
+    /* Ensure badge/button alignment inside td */
+    .table-card-mobile td .badge,
+    .table-card-mobile td .btn { flex-shrink: 0; }
+
+    /* Nested content (name + subtitle) stays left-aligned */
+    .table-card-mobile td > div,
+    .table-card-mobile td > span { text-align: left; }
+
+    /* Hide less important columns on mobile if marked */
+    .table-card-mobile td.d-mobile-none { display: none !important; }
+
+    /* Wrapper still needs overflow for desktop */
+    .table-responsive { overflow-x: auto; }
+}
+
+
+/* ── 3. Dashboard — 4 Cards Only (already done in view,   ── */
+/*    but ensure grid is even with 4 items)                   */
+
+.pt-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+@media (max-width: 991.98px) {
+    .pt-stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 575.98px) {
+    .pt-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+
+
+/* ── 4. POS Sticky Bottom Bar (Mobile Only) ───────────────── */
+
+.pos-sticky-bar {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .pos-sticky-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1045;
+        background: var(--bg-card);
+        border-top: 2px solid var(--pt-yellow);
+        padding: 12px 16px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        box-shadow: 0 -4px 24px rgba(0,0,0,.15);
+    }
+
+    .pos-sticky-bar .pos-sticky-total {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+    .pos-sticky-bar .pos-sticky-label {
+        font-size: .72rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-weight: 600;
+    }
+    .pos-sticky-bar .pos-sticky-amount {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--pt-yellow);
+        font-family: 'Outfit', sans-serif;
+    }
+    .pos-sticky-bar .pos-sticky-btn {
+        flex: 1;
+        max-width: 220px;
+    }
+
+    /* Add padding to POS page so content isn't hidden behind bar */
+    .pos-page-wrap { padding-bottom: 80px; }
+
+    /* Hide FAB on POS pages to avoid overlap */
+    .pos-page-wrap ~ * .pt-fab-wrap { display: none; }
+}
+
+
+/* ── 5. Auth Page — Desktop Fix ───────────────────────────── */
+
+@media (min-width: 768px) {
+    .auth-card {
+        max-width: 520px !important;  /* wider on desktop */
+    }
+    .auth-body {
+        padding: 28px 40px 40px !important;
+    }
+    .auth-card-header {
+        padding: 36px 40px 0 !important;
+    }
+    .auth-logo {
+        width: 80px !important;
+        height: 80px !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .auth-card {
+        max-width: 560px !important;
+    }
+}

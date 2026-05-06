@@ -88,7 +88,7 @@
 
 {# ── Table ── #}
 <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-hover align-middle table-card-mobile">
         <thead class="table-dark">
             <tr>
                 <th>#</th>
@@ -103,8 +103,8 @@
         <tbody>
             {% for tx in transactions %}
             <tr>
-                <td class="text-muted small">{{ tx.pk }}</td>
-                <td>
+                <td data-label="#" class="text-muted small">{{ tx.pk }}</td>
+                <td data-label="Type">
                     {% if tx.tx_type == 'booking' %}
                         <span class="badge bg-success">Booking</span>
                     {% elif tx.tx_type == 'sale' %}
@@ -117,13 +117,13 @@
                         <span class="badge bg-secondary">Manual</span>
                     {% endif %}
                 </td>
-                <td class="small">
+                <td data-label="Description" class="small">
                     {{ tx.description|default:"—"|truncatechars:50 }}
                 </td>
-                <td class="fw-semibold text-success">
+                <td data-label="Amount" class="fw-semibold text-success">
                     ₱{{ tx.amount }}
                 </td>
-                <td>
+                <td data-label="Status">
                     {% if tx.payment_status == 'paid' %}
                         <span class="badge bg-success">Paid</span>
                     {% elif tx.payment_status == 'pending' %}
@@ -134,13 +134,13 @@
                         <span class="badge bg-secondary">Waived</span>
                     {% endif %}
                 </td>
-                <td class="text-muted small text-nowrap">
+                <td data-label="Date" class="text-muted small text-nowrap">
                     {{ tx.created_at|date:"M d, Y" }}<br>
                     <span style="font-size:.7rem;">
                         {{ tx.created_at|time:"g:i A" }}
                     </span>
                 </td>
-                <td>
+                <td data-label="Action" class="td-actions">
                     {% if tx.payment_status == 'pending' %}
                     <form method="post"
                           action="{% url 'transactions:mark_paid' tx.pk %}">

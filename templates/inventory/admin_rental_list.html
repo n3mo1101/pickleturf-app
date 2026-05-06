@@ -3,8 +3,9 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4><i class="bi bi-clock-history"></i> Rental Records</h4>
-    <a href="{% url 'inventory:admin_list' %}"
-       class="btn btn-outline-secondary btn-sm">← Inventory</a>
+    <a href="{% url 'inventory:admin_rental_pos' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Rent Counter
+    </a>
 </div>
 
 <form method="get" class="row g-2 mb-3">
@@ -55,7 +56,7 @@
 </form>
 
 <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-hover align-middle table-card-mobile">
         <thead class="table-dark">
             <tr>
                 <th>#</th>
@@ -72,14 +73,14 @@
         <tbody>
             {% for r in rentals %}
             <tr>
-                <td class="text-muted small">{{ r.pk }}</td>
-                <td class="fw-semibold">{{ r.item.name }}</td>
-                <td>{{ r.renter_name }}</td>
-                <td class="text-muted small">{{ r.renter_contact|default:"—" }}</td>
-                <td>{{ r.rented_at|date:"M d, Y g:i A" }}</td>
-                <td>{{ r.quantity }}</td>
-                <td>₱{{ r.total_cost }}</td>
-                <td>
+                <td data-label="#" class="text-muted small">{{ r.pk }}</td>
+                <td data-label="Item" class="fw-semibold">{{ r.item.name }}</td>
+                <td data-label="Renter">{{ r.renter_name }}</td>
+                <td data-label="Contact" class="text-muted small">{{ r.renter_contact|default:"—" }}</td>
+                <td data-label="Rented At">{{ r.rented_at|date:"M d, Y g:i A" }}</td>
+                <td data-label="Qty">{{ r.quantity }}</td>
+                <td data-label="Cost">₱{{ r.total_cost }}</td>
+                <td data-label="Status">
                     {% if r.status == 'active' %}
                     <span class="badge bg-warning text-dark">Active</span>
                     {% elif r.status == 'returned' %}
@@ -88,7 +89,7 @@
                     <span class="badge bg-danger">Overdue</span>
                     {% endif %}
                 </td>
-                <td>
+                <td data-label="Action" class="td-actions">
                     {% if r.status == 'active' %}
                     <a href="{% url 'inventory:admin_return' r.pk %}"
                     class="btn btn-sm btn-success">
