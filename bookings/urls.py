@@ -15,4 +15,5 @@ urlpatterns = [
     path('admin/new/',          views.admin_booking_create_view, name='admin_create'),
     path('admin/<int:pk>/cancel/', views.admin_booking_cancel_view, name='admin_cancel'),
     path('admin/<int:pk>/status/', views.admin_booking_status_view, name='admin_status'),
+    path('staff/', views.staff_bookings_view, name='staff_bookings'),
 ]

@@ -345,3 +345,27 @@ def admin_booking_status_view(request, pk):
         'booking':        booking,
         'status_choices': Booking.Status.choices,
     })
+
+
+@admin_or_staff_required
+def staff_bookings_view(request):
+    """
+    Show bookings created by the logged-in staff member.
+    Useful for staff to track bookings they personally processed.
+    """
+    from django.core.paginator import Paginator
+
+    bookings = (
+        Booking.objects
+        .filter(created_by=request.user)
+        .select_related('court', 'user')
+        .order_by('-date', '-start_time')
+    )
+
+    paginator = Paginator(bookings, 10)
+    page      = request.GET.get('page', 1)
+    bookings  = paginator.get_page(page)
+
+    return render(request, 'bookings/staff_bookings.html', {
+        'bookings': bookings,
+    })
