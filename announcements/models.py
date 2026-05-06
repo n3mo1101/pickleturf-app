@@ -4,17 +4,22 @@ from django.conf import settings
 
 class Announcement(models.Model):
 
-    class Visibility(models.TextChoices):
-        ALL      = 'all',      'Everyone'
-        MEMBERS  = 'members',  'Members Only'
+    class Level(models.TextChoices):
+        INFO    = 'info', 'Info (Blue)'
+        SUCCESS = 'success', 'Sale (Green)'
+        WARNING = 'warning', 'Warning (Yellow)'
 
     title      = models.CharField(max_length=200)
-    body       = models.TextField()
-    image      = models.ImageField(upload_to='announcements/', blank=True, null=True)
-    visibility = models.CharField(
-        max_length=20, choices=Visibility.choices, default=Visibility.ALL
+    body       = models.TextField(blank=True)
+    level      = models.CharField(
+        max_length=20,
+        choices=Level.choices,
+        default=Level.INFO
     )
-    is_pinned  = models.BooleanField(default=False)
+    is_active  = models.BooleanField(
+        default=True,
+        help_text='Uncheck to take down this announcement.'
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -25,8 +30,7 @@ class Announcement(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-is_pinned', '-created_at']
-        indexes  = [models.Index(fields=['-is_pinned', '-created_at'])]
+        ordering = ['-created_at']
 
     def __str__(self):
         return self.title

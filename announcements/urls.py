@@ -1,8 +1,11 @@
 from django.urls import path
-from django.views.generic import TemplateView
+from . import views
 
 app_name = 'announcements'
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='coming_soon.html'), name='list'),
+    path('admin/',                  views.admin_list_view,     name='admin_list'),
+    path('admin/new/',              views.admin_create_view,   name='admin_create'),
+    path('admin/<int:pk>/edit/',    views.admin_edit_view,     name='admin_edit'),
+    path('admin/<int:pk>/takedown/', views.admin_takedown_view, name='admin_takedown'),
 ]
