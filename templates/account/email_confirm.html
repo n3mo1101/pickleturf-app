@@ -1,10 +1,31 @@
 {% extends 'accounts/base_auth.html' %}
-{% block auth_title %}Confirm Your Email{% endblock %}
+
+{% block auth_title %}Confirm Email — PickleTurf{% endblock %}
+{% block card_title %}Confirm Your Email{% endblock %}
+{% block card_subtitle %}Click the button below to verify your account{% endblock %}
+
 {% block auth_content %}
-<div class="text-center">
-    <i class="bi bi-envelope-check-fill text-success" style="font-size:3rem;"></i>
-    <p class="mt-3">We've sent a confirmation link to <strong>{{ email }}</strong>.</p>
-    <p class="text-muted small">Check your inbox (and spam folder).</p>
-    <a href="{% url 'account_login' %}" class="btn btn-outline-secondary mt-2">Back to Login</a>
+<div class="text-center py-2">
+    <div style="width:72px;height:72px;background:var(--pt-yellow-pale);
+                border-radius:50%;display:flex;align-items:center;
+                justify-content:center;margin:0 auto 20px;font-size:2rem;">
+        <i class="bi bi-envelope-check-fill text-navy"></i>
+    </div>
+    <p class="text-muted">
+        Please confirm that
+        <strong>{{ confirmation.email_address.email }}</strong>
+        is your email address.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-success w-100 fw-bold mt-2">
+            <i class="bi bi-check-circle me-2"></i>Confirm Email Address
+        </button>
+    </form>
+    <a href="{% url 'account_login' %}"
+       class="btn btn-outline-secondary w-100 mt-2">
+        Cancel
+    </a>
 </div>
 {% endblock %}

@@ -55,3 +55,13 @@ def admin_takedown_view(request, pk):
             request, f'"{announcement.title}" has been taken down.'
         )
     return redirect('announcements:admin_list')
+
+
+@admin_or_staff_required
+def admin_delete_view(request, pk):
+    announcement = get_object_or_404(Announcement, pk=pk)
+    if request.method == 'POST':
+        title = announcement.title
+        announcement.delete()
+        messages.success(request, f'"{title}" deleted.')
+    return redirect('announcements:admin_list')

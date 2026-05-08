@@ -539,6 +539,7 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
 .alert-warning { border-left-color: var(--pt-yellow); }
 .alert-info    { border-left-color: #2C7BE5; }
 
+
 /* ── 14. FAB ───────────────────────────────────────────────── */
 .pt-fab-wrap {
   position: fixed;
@@ -910,7 +911,7 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
 
 
 /* ============================================================
-   PATCH: Dark Mode Text · Table Cards · POS Mobile · Auth Fix
+   PATCH: Dark Mode Text and Component Color Fixes
    ============================================================ */
 
 /* ── 1. Dark Mode Text Fixes ──────────────────────────────── */
@@ -997,6 +998,77 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
 /* Topbar icon color on dark */
 [data-theme="dark"] .pt-topbar { background: var(--pt-navy-dark); }
 
+/* ── Announcement Banners: preserve alert text colors in dark mode ── */
+
+[data-theme="dark"] .alert-warning {
+    background-color: #fef9c3 !important;   /* pale yellow — keep light */
+    border-left-color: #ca8a04 !important;
+    color: #713f12 !important;              /* dark brown text */
+}
+[data-theme="dark"] .alert-warning *,
+[data-theme="dark"] .alert-warning strong,
+[data-theme="dark"] .alert-warning span,
+[data-theme="dark"] .alert-warning div {
+    color: #713f12 !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: #e0f2fe !important;
+    border-left-color: #0284c7 !important;
+    color: #0c4a6e !important;
+}
+[data-theme="dark"] .alert-info *,
+[data-theme="dark"] .alert-info strong,
+[data-theme="dark"] .alert-info span,
+[data-theme="dark"] .alert-info div {
+    color: #0c4a6e !important;
+}
+
+[data-theme="dark"] .alert-success {
+    background-color: #dcfce7 !important;
+    border-left-color: #16a34a !important;
+    color: #14532d !important;
+}
+[data-theme="dark"] .alert-success *,
+[data-theme="dark"] .alert-success strong,
+[data-theme="dark"] .alert-success span,
+[data-theme="dark"] .alert-success div {
+    color: #14532d !important;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: #fee2e2 !important;
+    border-left-color: #dc2626 !important;
+    color: #7f1d1d !important;
+}
+[data-theme="dark"] .alert-danger *,
+[data-theme="dark"] .alert-danger strong,
+[data-theme="dark"] .alert-danger span,
+[data-theme="dark"] .alert-danger div {
+    color: #7f1d1d !important;
+}
+
+/* btn-close inside alerts — keep it visible */
+[data-theme="dark"] .alert .btn-close {
+    filter: invert(0) !important;
+    opacity: 0.6;
+}
+[data-theme="dark"] .alert-warning .btn-close,
+[data-theme="dark"] .alert-success .btn-close,
+[data-theme="dark"] .alert-info .btn-close,
+[data-theme="dark"] .alert-danger .btn-close {
+    filter: none !important;
+    opacity: 0.5;
+}
+
+/* Base teal (light mode) */
+.badge.bg-info {
+    background-color: #38bdf8 !important;   /* rich teal */
+}
+
+[data-theme="dark"] .badge.bg-info {
+    background-color: #088ca3 !important;   /* darker teal */
+}
 
 /* ── 2. Responsive Table → Card Layout ────────────────────── */
 
@@ -1163,6 +1235,14 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
 
     /* Hide FAB on POS pages to avoid overlap */
     .pos-page-wrap ~ * .pt-fab-wrap { display: none; }
+
+    @media (max-width: 991.98px) {
+    /* When sticky bar is present, raise FAB above it */
+    .pos-page-wrap ~ .pt-fab-wrap,
+    .pos-page-wrap + .pt-fab-wrap {
+        bottom: 90px !important;
+    }
+  }
 }
 
 

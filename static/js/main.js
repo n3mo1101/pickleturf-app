@@ -55,6 +55,24 @@ document.addEventListener('click', function (e) {
     }
 });
 
+/* ── FAB: avoid overlap with POS sticky bar ─────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+    const stickyBar = document.querySelector('.pos-sticky-bar');
+    const fab       = document.getElementById('ptFAB');
+
+    if (stickyBar && fab) {
+        // Raise FAB above sticky bar
+        fab.style.bottom = '84px';
+
+        // Also watch for bar becoming visible on resize
+        const observer = new ResizeObserver(() => {
+            const barVisible = window.getComputedStyle(stickyBar).display !== 'none';
+            fab.style.bottom = barVisible ? '84px' : '24px';
+        });
+        observer.observe(stickyBar);
+    }
+});
+
 /* ── Init ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
     // Set theme button state

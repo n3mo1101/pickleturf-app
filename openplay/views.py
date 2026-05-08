@@ -99,9 +99,14 @@ def leave_session_view(request, pk):
 @admin_or_staff_required
 def admin_session_list_view(request):
     """Admin sees all sessions with participant counts."""
-    sessions = OpenPlaySession.objects.prefetch_related('participants').order_by(
-        '-date', '-start_time'
-    )
+    from django.db.models import Count, Q
+
+    sessions = OpenPlaySession.objects.annotate(
+        pending_count=Count(
+            'participants',
+            filter=Q(participants__status=OpenPlayParticipant.Status.PENDING)
+        )
+    ).prefetch_related('participants').order_by('-date', '-start_time')
 
     # Filter by status
     status_filter = request.GET.get('status')

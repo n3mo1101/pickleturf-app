@@ -133,6 +133,7 @@ ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'              # ← point to our f
 ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION        = 'mandatory'
 ACCOUNT_CONFIRM_EMAIL_ON_GET      = True
+ACCOUNT_LOGOUT_ON_GET             = True
 ACCOUNT_ADAPTER                   = 'accounts.adapters.AccountAdapter'
 SOCIALACCOUNT_ADAPTER             = 'accounts.adapters.SocialAccountAdapter'
 ACCOUNT_FORMS                     = {'signup': 'accounts.forms.CustomSignupForm'}
