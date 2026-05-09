@@ -75,7 +75,7 @@
                     <tbody>
                         {% for r in active_rentals %}
                         <tr>
-                            <td>{{ r.user.full_name }}</td>
+                            <td>{{ r.user.renter_name }}</td>
                             <td>{{ r.rented_at|date:"M d, g:i A" }}</td>
                             <td>{{ r.quantity }}h</td>
                             <td>₱{{ r.total_cost }}</td>
@@ -109,7 +109,7 @@
                     <tbody>
                         {% for r in recent_rentals %}
                         <tr>
-                            <td>{{ r.user.full_name }}</td>
+                            <td>{{ r.user.renter_name }}</td>
                             <td>{{ r.rented_at|date:"M d" }}</td>
                             <td>
                                 {{ r.returned_at|date:"M d"|default:"—" }}

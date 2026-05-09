@@ -1,0 +1,180 @@
+/* ========================================================
+   All dark mode overrides and responsive table card layout
+   ======================================================== */
+
+/* ── 17. Dark Mode Card/Table Fixes ────────────────────────── */
+[data-theme="dark"] .card         { background: var(--bg-card); border-color: var(--border); }
+[data-theme="dark"] .card-header  { background: var(--bg-card) !important; border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .card-footer  { background: var(--bg-card) !important; border-color: var(--border); }
+[data-theme="dark"] .table-light > :not(caption) > * > * { background: rgba(255,255,255,.03) !important; color: var(--text-muted); }
+[data-theme="dark"] .list-group-item { background: var(--bg-card); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select  { background: var(--bg-input); border-color: var(--border); color: var(--text); }
+[data-theme="dark"] .modal-content { background: var(--bg-card); border-color: var(--border); }
+[data-theme="dark"] .dropdown-menu { background: var(--bg-card); border-color: var(--border); }
+[data-theme="dark"] .dropdown-item { color: var(--text); }
+[data-theme="dark"] .dropdown-item:hover { background: var(--bg); }
+[data-theme="dark"] .bg-light { background: rgba(255,255,255,.05) !important; }
+[data-theme="dark"] .text-dark { color: var(--text) !important; }
+[data-theme="dark"] .border     { border-color: var(--border) !important; }
+
+
+/* ============================================================
+   PATCH: Dark Mode Text and Component Color Fixes
+   ============================================================ */
+
+/* ── 1. Dark Mode Text Fixes ──────────────────────────────── */
+
+/* General text inside cards */
+[data-theme="dark"] .card-body,
+[data-theme="dark"] .card-body p,
+[data-theme="dark"] .card-body span,
+[data-theme="dark"] .card-body div,
+[data-theme="dark"] .card-body small,
+[data-theme="dark"] .card-body label {
+    color: var(--text);
+}
+
+/* Muted text */
+[data-theme="dark"] .text-muted { color: var(--text-muted) !important; }
+
+/* Table cells */
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th,
+[data-theme="dark"] .table tbody tr td {
+    color: var(--text) !important;
+}
+
+/* List group items */
+[data-theme="dark"] .list-group-item {
+    background: var(--bg-card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+[data-theme="dark"] .list-group-item *:not(.badge) {
+    color: inherit;
+}
+
+/* Alert text */
+[data-theme="dark"] .alert { color: var(--text); }
+
+/* Form labels */
+[data-theme="dark"] .form-label,
+[data-theme="dark"] label { color: var(--text) !important; }
+
+/* Crispy form help text */
+[data-theme="dark"] .form-text,
+[data-theme="dark"] .helptext { color: var(--text-muted) !important; }
+
+/* Stat cards */
+[data-theme="dark"] .pt-stat-card .text-muted { color: var(--text-muted) !important; }
+[data-theme="dark"] .pt-stat-card * { color: var(--text); }
+[data-theme="dark"] .pt-stat-card .text-success { color: #4ade80 !important; }
+[data-theme="dark"] .pt-stat-card .text-primary { color: #60a5fa !important; }
+[data-theme="dark"] .pt-stat-card .text-warning { color: var(--pt-yellow) !important; }
+[data-theme="dark"] .pt-stat-card .text-info    { color: #38bdf8 !important; }
+
+/* Dashboard chart cards */
+[data-theme="dark"] .card-header.bg-white {
+    background: var(--bg-card) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+}
+
+/* Page headers */
+[data-theme="dark"] h1,[data-theme="dark"] h2,
+[data-theme="dark"] h3,[data-theme="dark"] h4,
+[data-theme="dark"] h5,[data-theme="dark"] h6 {
+    color: var(--text);
+}
+
+/* fw-bold, fw-semibold spans */
+[data-theme="dark"] .fw-bold,
+[data-theme="dark"] .fw-semibold { color: inherit; }
+
+/* Input placeholder */
+[data-theme="dark"] ::placeholder { color: var(--text-muted) !important; opacity: 1; }
+
+/* Progress bar bg */
+[data-theme="dark"] .progress { background: var(--border); }
+
+/* Availability grid */
+[data-theme="dark"] .table-bordered td,
+[data-theme="dark"] .table-bordered th {
+    border-color: var(--border) !important;
+}
+
+/* Topbar icon color on dark */
+[data-theme="dark"] .pt-topbar { background: var(--pt-navy-dark); }
+
+/* ── Announcement Banners: preserve alert text colors in dark mode ── */
+
+[data-theme="dark"] .alert-warning {
+    background-color: #fef9c3 !important;   /* pale yellow — keep light */
+    border-left-color: #ca8a04 !important;
+    color: #713f12 !important;              /* dark brown text */
+}
+[data-theme="dark"] .alert-warning *,
+[data-theme="dark"] .alert-warning strong,
+[data-theme="dark"] .alert-warning span,
+[data-theme="dark"] .alert-warning div {
+    color: #713f12 !important;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: #e0f2fe !important;
+    border-left-color: #0284c7 !important;
+    color: #0c4a6e !important;
+}
+[data-theme="dark"] .alert-info *,
+[data-theme="dark"] .alert-info strong,
+[data-theme="dark"] .alert-info span,
+[data-theme="dark"] .alert-info div {
+    color: #0c4a6e !important;
+}
+
+[data-theme="dark"] .alert-success {
+    background-color: #dcfce7 !important;
+    border-left-color: #16a34a !important;
+    color: #14532d !important;
+}
+[data-theme="dark"] .alert-success *,
+[data-theme="dark"] .alert-success strong,
+[data-theme="dark"] .alert-success span,
+[data-theme="dark"] .alert-success div {
+    color: #14532d !important;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: #fee2e2 !important;
+    border-left-color: #dc2626 !important;
+    color: #7f1d1d !important;
+}
+[data-theme="dark"] .alert-danger *,
+[data-theme="dark"] .alert-danger strong,
+[data-theme="dark"] .alert-danger span,
+[data-theme="dark"] .alert-danger div {
+    color: #7f1d1d !important;
+}
+
+/* btn-close inside alerts — keep it visible */
+[data-theme="dark"] .alert .btn-close {
+    filter: invert(0) !important;
+    opacity: 0.6;
+}
+[data-theme="dark"] .alert-warning .btn-close,
+[data-theme="dark"] .alert-success .btn-close,
+[data-theme="dark"] .alert-info .btn-close,
+[data-theme="dark"] .alert-danger .btn-close {
+    filter: none !important;
+    opacity: 0.5;
+}
+
+/* Base teal (light mode) */
+.badge.bg-info {
+    background-color: #38bdf8 !important;   /* rich teal */
+}
+
+[data-theme="dark"] .badge.bg-info {
+    background-color: #088ca3 !important;   /* darker teal */
+}

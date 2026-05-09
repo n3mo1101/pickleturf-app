@@ -1,38 +1,6 @@
 {% extends 'layouts/base.html' %}
+{% load static %}
 {% block title %}Dashboard{% endblock %}
-
-{% block extra_css %}
-<style>
-    .stat-card {
-        border-left: 4px solid;
-        transition: transform .15s ease;
-    }
-    .stat-card:hover { transform: translateY(-2px); }
-    .stat-card.green  { border-color: #198754; }
-    .stat-card.blue   { border-color: #0d6efd; }
-    .stat-card.yellow { border-color: #ffc107; }
-    .stat-card.red    { border-color: #dc3545; }
-    .stat-card.teal   { border-color: #0dcaf0; }
-    .stat-card.purple { border-color: #6f42c1; }
-    .chart-card { min-height: 320px; }
-    
-    .description-cell {
-        max-width: 220px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-        .description-cell {
-            max-width: none;
-            white-space: normal;
-            word-break: break-word;
-        }
-    }
-</style>
-{% endblock %}
 
 {% block content %}
 
@@ -394,9 +362,8 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
 <script>
-// ── Data from Django ───────────────────────────────────────────────────────────
+// Data injected from Django
 const dailyLabels   = {{ daily_labels|safe }};
 const dailyData     = {{ daily_data|safe }};
 const monthlyLabels = {{ monthly_labels|safe }};
@@ -405,161 +372,6 @@ const typeLabels    = {{ type_labels|safe }};
 const typeData      = {{ type_data|safe }};
 const courtLabels   = {{ court_labels|safe }};
 const courtData     = {{ court_data|safe }};
-
-// ── Shared Defaults ────────────────────────────────────────────────────────────
-Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
-Chart.defaults.font.size   = 12;
-Chart.defaults.color       = '#6c757d';
-
-const gridColor  = 'rgba(0,0,0,0.05)';
-const greenColor = '#198754';
-const blueColor  = '#0d6efd';
-
-// ── 1. Daily Revenue Line Chart ───────────────────────────────────────────────
-new Chart(document.getElementById('dailyRevenueChart'), {
-    type: 'line',
-    data: {
-        labels: dailyLabels,
-        datasets: [{
-            label: 'Revenue (₱)',
-            data: dailyData,
-            borderColor: greenColor,
-            backgroundColor: 'rgba(25,135,84,0.08)',
-            borderWidth: 2,
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            fill: true,
-            tension: 0.3,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` ₱${ctx.parsed.y.toLocaleString()}`
-                }
-            }
-        },
-        scales: {
-            x: {
-                grid: { display: false },
-                ticks: {
-                    maxTicksLimit: 10,
-                    maxRotation: 0,
-                }
-            },
-            y: {
-                beginAtZero: true,
-                grid: { color: gridColor },
-                ticks: {
-                    callback: v => '₱' + v.toLocaleString()
-                }
-            }
-        }
-    }
-});
-
-// ── 2. Revenue by Type Doughnut ────────────────────────────────────────────────
-if (typeData && typeData.length > 0) {
-    new Chart(document.getElementById('revenueTypeChart'), {
-        type: 'doughnut',
-        data: {
-            labels: typeLabels,
-            datasets: [{
-                data: typeData,
-                backgroundColor: typeLabels.map(label => {
-                    const map = {
-                        'Court Booking': '#198754',   // green
-                        'Equipment Rental': '#F5C518', // yellow
-                        'Item Sale': '#0d6efd',        // blue
-                        'Open Play': '#0dcaf0',        // teal
-                        'Manual Entry': '#6f42c1',     // purple
-                    };
-                    return map[label] || '#adb5bd';
-                }),
-                borderWidth: 2,
-                borderColor: '#fff',
-            }]
-        },
-        options: {
-            responsive: true,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { padding: 12, boxWidth: 12 }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: ctx => ` ₱${ctx.parsed.toLocaleString()}`
-                    }
-                }
-            }
-        }
-    });
-}
-
-// ── 3. Monthly Revenue Bar Chart ───────────────────────────────────────────────
-new Chart(document.getElementById('monthlyRevenueChart'), {
-    type: 'bar',
-    data: {
-        labels: monthlyLabels,
-        datasets: [{
-            label: 'Revenue (₱)',
-            data: monthlyData,
-            backgroundColor: 'rgba(13,110,253,0.7)',
-            borderRadius: 4,
-            borderSkipped: false,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            tooltip: {
-                callbacks: {
-                    label: ctx => ` ₱${ctx.parsed.y.toLocaleString()}`
-                }
-            }
-        },
-        scales: {
-            x: { grid: { display: false } },
-            y: {
-                beginAtZero: true,
-                grid: { color: gridColor },
-                ticks: { callback: v => '₱' + v.toLocaleString() }
-            }
-        }
-    }
-});
-
-// ── 4. Court Utilization Bar Chart ─────────────────────────────────────────────
-new Chart(document.getElementById('courtChart'), {
-    type: 'bar',
-    data: {
-        labels: courtLabels,
-        datasets: [{
-            label: 'Bookings',
-            data: courtData,
-            backgroundColor: 'rgba(13,202,240,0.7)',
-            borderRadius: 4,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            x: { grid: { display: false } },
-            y: {
-                beginAtZero: true,
-                ticks: { stepSize: 1 },
-                grid: { color: gridColor },
-            }
-        }
-    }
-});
-
 </script>
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}

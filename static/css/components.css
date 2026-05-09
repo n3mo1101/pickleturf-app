@@ -1,0 +1,371 @@
+/* =====================================================================
+   Cards · Buttons · Forms · Tables · Badges · Alerts · FAB · Pagination
+   ===================================================================== */
+
+/* ── 8. Cards ──────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r) !important;
+  box-shadow: var(--shadow);
+  transition: background .25s, border-color .25s, box-shadow .25s;
+}
+.card-header {
+  border-radius: var(--r) var(--r) 0 0 !important;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 18px;
+  background: var(--bg-card) !important;
+  font-weight: 600;
+  color: var(--text);
+}
+.card-header.bg-dark { background: var(--pt-navy) !important; color: #fff !important; }
+.card-header.bg-success { background: var(--pt-navy) !important; color: #fff !important; }
+.card-header.bg-warning { background: var(--pt-yellow) !important; color: var(--pt-navy) !important; }
+.card-header.bg-info    { background: #2C7BE5 !important; color: #fff !important; }
+.card-header.bg-danger  { background: #e63757 !important; color: #fff !important; }
+.card-body { padding: 18px; color: var(--text); }
+.card-footer { background: var(--bg-card) !important; border-top: 1px solid var(--border); }
+
+/* Stat cards */
+.pt-stat-card {
+  border-left: 4px solid var(--pt-yellow) !important;
+  border-radius: var(--r) !important;
+}
+.pt-stat-card.navy  { border-left-color: var(--pt-navy) !important; }
+.pt-stat-card.blue  { border-left-color: #2C7BE5 !important; }
+.pt-stat-card.red   { border-left-color: #e63757 !important; }
+.pt-stat-card.green { border-left-color: #00b274 !important; }
+
+
+/* ── 9. Buttons ────────────────────────────────────────────── */
+.btn {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  border-radius: var(--r-sm) !important;
+  transition: all .18s;
+  font-size: .88rem;
+}
+.btn-success {
+  background: var(--pt-navy) !important;
+  border-color: var(--pt-navy) !important;
+  color: #fff !important;
+}
+.btn-success:hover {
+  background: var(--pt-navy-dark) !important;
+  border-color: var(--pt-navy-dark) !important;
+}
+.btn-warning {
+  background: var(--pt-yellow) !important;
+  border-color: var(--pt-yellow) !important;
+  color: var(--pt-navy) !important;
+}
+.btn-warning:hover {
+  background: var(--pt-yellow-dark) !important;
+  border-color: var(--pt-yellow-dark) !important;
+}
+.btn-outline-success {
+  border-color: var(--pt-navy) !important;
+  color: var(--pt-navy) !important;
+}
+.btn-outline-success:hover {
+  background: var(--pt-navy) !important;
+  color: #fff !important;
+}
+.btn-outline-secondary {
+  border-color: var(--border) !important;
+  color: var(--text-muted) !important;
+  background: transparent !important;
+}
+.btn-outline-secondary:hover {
+  background: var(--pt-navy) !important;
+  color: #fff !important;
+  border-color: var(--pt-navy) !important;
+}
+/* Touch-friendly sizing on mobile */
+@media (max-width: 767.98px) {
+  .btn { padding: .55rem 1rem; font-size: .9rem; }
+  .btn-sm { padding: .42rem .8rem; font-size: .82rem; }
+}
+
+
+/* ── 10. Forms ─────────────────────────────────────────────── */
+.form-control, .form-select {
+  background: var(--bg-input);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm) !important;
+  color: var(--text);
+  font-size: .9rem;
+  transition: border-color .2s, box-shadow .2s;
+  padding: .55rem .9rem;
+}
+.form-control:focus, .form-select:focus {
+  background: var(--bg-input);
+  border-color: var(--pt-navy);
+  box-shadow: 0 0 0 3px rgba(27,42,74,.12);
+  color: var(--text);
+}
+@media (max-width: 767.98px) {
+  .form-control, .form-select {
+    font-size: 16px; /* prevents iOS zoom */
+    padding: .65rem 1rem;
+  }
+}
+label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
+
+
+/* ── 11. Tables ────────────────────────────────────────────── */
+.table { color: var(--text); }
+.table > :not(caption) > * > * {
+  background: transparent;
+  color: var(--text);
+  border-bottom-color: var(--border);
+  padding: .85rem .9rem;
+}
+.table-dark > :not(caption) > * > * {
+  background: var(--pt-navy) !important;
+  color: #fff;
+  border-color: var(--pt-navy-light);
+}
+.table-light > :not(caption) > * > * {
+  background: var(--bg) !important;
+  color: var(--text-muted);
+}
+.table-hover tbody tr:hover > * {
+  background: var(--bg) !important;
+}
+.table-responsive { border-radius: var(--r); overflow: hidden; }
+
+/* ── Responsive Table → Card Layout ────────────────────── */
+
+/*
+  HOW IT WORKS:
+  On mobile (< 768px), hide the thead and turn each <tr> into
+  a styled card. Each <td> becomes a block row with a label
+  pulled from data-label attribute set on the td.
+*/
+
+@media (max-width: 767.98px) {
+
+    .table-card-mobile thead {
+        display: none !important;
+    }
+
+    .table-card-mobile,
+    .table-card-mobile tbody,
+    .table-card-mobile tr,
+    .table-card-mobile td {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .table-card-mobile tbody tr {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--r) !important;
+        margin-bottom: 10px;
+        padding: 4px 0;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-card-mobile tbody tr:hover > * {
+        background: transparent !important;
+    }
+
+    .table-card-mobile td {
+        padding: 10px 16px !important;
+        border-bottom: 1px solid var(--border) !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-top: none !important;
+        text-align: right !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        min-height: 44px;
+        gap: 8px;
+    }
+
+    .table-card-mobile td:last-child {
+        border-bottom: none !important;
+    }
+
+    /* Label from data-label attr */
+    .table-card-mobile td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: .8rem;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted);
+        text-align: left;
+        flex-shrink: 0;
+        margin-right: 8px;
+    }
+
+    /* Special: action column — full width centered */
+    .table-card-mobile td.td-actions {
+        justify-content: flex-end !important;
+    }
+    .table-card-mobile td.td-actions::before {
+        display: none !important;
+    }
+
+    /* Special: first cell gets a yellow left border accent */
+    .table-card-mobile td:first-child {
+        border-left: 4px solid var(--pt-yellow) !important;
+        font-weight: 600;
+    }
+
+    /* Ensure badge/button alignment inside td */
+    .table-card-mobile td .badge,
+    .table-card-mobile td .btn { flex-shrink: 0; }
+
+    /* Nested content (name + subtitle) stays left-aligned */
+    .table-card-mobile td > div,
+    .table-card-mobile td > span { text-align: left; }
+
+    /* Hide less important columns on mobile if marked */
+    .table-card-mobile td.d-mobile-none { display: none !important; }
+
+    /* Wrapper still needs overflow for desktop */
+    .table-responsive { overflow-x: auto; }
+}
+
+/* ── 12. Badges ────────────────────────────────────────────── */
+.badge {
+  font-weight: 600;
+  font-size: .72rem;
+  border-radius: 6px !important;
+  padding: .35em .65em;
+}
+.badge.bg-success { background: var(--pt-navy) !important; }
+
+
+/* ── 13. Alerts / Messages ─────────────────────────────────── */
+.alert {
+  border-radius: var(--r-sm) !important;
+  font-size: .9rem;
+  border-left: 4px solid transparent;
+}
+.alert-success { border-left-color: #00b274; }
+.alert-danger  { border-left-color: #e63757; }
+.alert-warning { border-left-color: var(--pt-yellow); }
+.alert-info    { border-left-color: #2C7BE5; }
+
+
+/* ── 14. FAB ───────────────────────────────────────────────── */
+.pt-fab-wrap {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.pt-fab-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  transition: all .2s;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.pt-fab-wrap.open .pt-fab-actions {
+  pointer-events: all;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pt-fab-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1.5px solid var(--border);
+  border-radius: 40px;
+  padding: 9px 16px 9px 12px;
+  font-size: .85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  text-decoration: none !important;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.pt-fab-action i {
+  width: 28px; height: 28px;
+  background: var(--pt-navy);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  flex-shrink: 0;
+}
+.pt-fab-action:hover {
+  background: var(--pt-navy);
+  color: #fff;
+  border-color: var(--pt-navy);
+  transform: translateX(-4px);
+}
+.pt-fab-action:hover i {
+  background: var(--pt-yellow);
+  color: var(--pt-navy);
+}
+
+.pt-fab-main {
+  width: var(--fab-size);
+  height: var(--fab-size);
+  border-radius: 50%;
+  background: var(--pt-yellow);
+  color: var(--pt-navy);
+  border: none;
+  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(245,197,24,.5);
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.pt-fab-main:hover {
+  background: var(--pt-yellow-dark);
+  transform: scale(1.08);
+}
+.pt-fab-wrap.open .pt-fab-main {
+  background: var(--pt-navy);
+  color: #fff;
+  transform: rotate(45deg);
+}
+
+/* ── Others ───────────────────────────────────────────────── */
+/* Pagination */
+.page-link {
+  color: var(--pt-navy);
+  border-color: var(--border);
+  background: var(--bg-card);
+}
+.page-link:hover { background: var(--pt-navy); color: #fff; border-color: var(--pt-navy); }
+.page-item.active .page-link { background: var(--pt-navy); border-color: var(--pt-navy); }
+
+/* Availability grid */
+.slot-card { transition: all .12s; cursor: pointer; }
+.slot-card:hover { border-color: var(--pt-navy) !important; background: rgba(27,42,74,.05); }
+.slot-card.border-success { border-color: var(--pt-navy) !important; }
+
+/* POS item card */
+.pos-item-card { transition: all .12s ease; cursor: pointer; }
+.pos-item-card:hover { transform: translateY(-2px); }
+.pos-item-card.border-success { border-color: var(--pt-navy) !important; border-width: 2px !important; }
+.rental-item-card { transition: all .12s ease; cursor: pointer; }
+.rental-item-card:hover { transform: translateY(-2px); }
+.rental-item-card.border-warning { border-color: var(--pt-yellow) !important; border-width: 2px !important; }
