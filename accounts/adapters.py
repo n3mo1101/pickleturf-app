@@ -33,6 +33,15 @@ class AccountAdapter(DefaultAccountAdapter):
             counter += 1
         return username
 
+    def get_login_redirect_url(self, request):
+        """
+        Send admin/staff to dashboard,
+        customers to home after login.
+        """
+        if request.user.is_authenticated and request.user.is_admin_or_staff:
+            return '/dashboard/'
+        return '/'
+
 
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
 
