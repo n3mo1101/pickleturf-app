@@ -34,6 +34,8 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'cloudinary_storage',
+    'cloudinary',           
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -202,6 +204,42 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     },
 }
+
+# ─── PRODUCTION DATABASE ──────────────────────────────────────────────────────
+import dj_database_url
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+    )
+}
+
+# ─── CLOUDINARY (Media Files) ─────────────────────────────────────────────────
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# Only use Cloudinary in production
+if not DEBUG:
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# ─── SECURITY (Production Only) ───────────────────────────────────────────────
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER      = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT          = True
+    SESSION_COOKIE_SECURE        = True
+    CSRF_COOKIE_SECURE           = True
+    SECURE_HSTS_SECONDS          = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD          = True
+    SECURE_CONTENT_TYPE_NOSNIFF  = True
+
+    CSRF_TRUSTED_ORIGINS = [
+    f"https://{host}" for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host
+    ]
 
 # ─── BOOKING CONFIG ───────────────────────────────────────────────────────────
 BOOKING_OPENING_HOUR = 8    # 8:00 AM
