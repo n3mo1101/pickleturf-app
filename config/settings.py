@@ -31,8 +31,6 @@ DJANGO_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    'cloudinary_storage',
-    'cloudinary',  
 ]
 
 THIRD_PARTY_APPS = [         
@@ -213,17 +211,6 @@ DATABASES = {
         conn_max_age=600,
     )
 }
-
-# ─── CLOUDINARY (Media Files) ─────────────────────────────────────────────────
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-}
-
-# Only use Cloudinary in production
-if not DEBUG:
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # ─── SECURITY (Production Only) ───────────────────────────────────────────────
 if not DEBUG:
