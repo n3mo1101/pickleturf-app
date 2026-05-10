@@ -183,3 +183,5 @@ cython_debug/
 # Project specific files to ignore
 *.pyc
 media/
+staticfiles/
+static_root/
