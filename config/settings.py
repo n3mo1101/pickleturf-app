@@ -31,11 +31,11 @@ DJANGO_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'cloudinary_storage',
+    'cloudinary',  
 ]
 
-THIRD_PARTY_APPS = [
-    'cloudinary_storage',
-    'cloudinary',           
+THIRD_PARTY_APPS = [         
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
