@@ -18,7 +18,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-dev-key')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG')
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')
 
 # ─── APPLICATIONS ─────────────────────────────────────────────────────────────
@@ -33,9 +33,9 @@ DJANGO_APPS = [
     'django.contrib.sites',
 ]
 
-THIRD_PARTY_APPS = [
+THIRD_PARTY_APPS = [        
     'cloudinary_storage',
-    'cloudinary',           
+    'cloudinary',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -130,10 +130,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ─── ALLAUTH CONFIG ────────────────────────────────────────────────────────────
 
-ACCOUNT_LOGIN_METHODS             = {'email', 'username'}   # ← allow both
-ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'              # ← point to our field
+ACCOUNT_LOGIN_METHODS             = {'email', 'username'}  
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'username'              
 ACCOUNT_SIGNUP_FIELDS             = ['email*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_VERIFICATION        = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION        = os.environ.get('EMAIL_VERIFICATION', 'none') 
 ACCOUNT_CONFIRM_EMAIL_ON_GET      = True
 ACCOUNT_LOGOUT_ON_GET             = True
 ACCOUNT_ADAPTER                   = 'accounts.adapters.AccountAdapter'
@@ -229,7 +229,7 @@ if not DEBUG:
 # ─── SECURITY (Production Only) ───────────────────────────────────────────────
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER      = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT          = True
+    SECURE_SSL_REDIRECT          = False
     SESSION_COOKIE_SECURE        = True
     CSRF_COOKIE_SECURE           = True
     SECURE_HSTS_SECONDS          = 31536000
