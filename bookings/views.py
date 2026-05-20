@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import models
+from django.utils import timezone
 from courts.models import Court
 from accounts.decorators import admin_or_staff_required
 from .forms import BookingForm, AdminBookingForm
@@ -22,39 +23,36 @@ def availability_view(request):
     except ValueError:
         selected_date = date.today()
 
-    grid = services.get_availability(selected_date)
+    grid     = services.get_availability(selected_date)
+    brackets = services.get_price_brackets_display()
 
     return render(request, 'bookings/availability.html', {
         'grid':          grid,
         'selected_date': selected_date,
         'today':         date.today().isoformat(),
-        'slots':         services.get_time_slots(),
+        'brackets':      brackets,
     })
 
 
 @login_required
 def booking_create_view(request):
-    """
-    Two-phase booking:
-    Phase 1 (GET)  — user picks court + date → page reloads showing available slots.
-    Phase 2 (POST) — user submits selected slots → bookings created.
-    """
     from django.conf import settings as django_settings
-    from datetime import datetime
 
     court_id      = request.GET.get('court') or request.POST.get('court')
     selected_date = request.GET.get('date')  or request.POST.get('date')
 
-    court          = None
+    court           = None
     available_slots = None
-    parsed_date    = None
+    parsed_date     = None
+    brackets        = services.get_price_brackets_display()
 
-    # Resolve court and date to show slot checkboxes
     if court_id and selected_date:
         try:
             court       = Court.objects.get(pk=court_id, is_active=True)
             parsed_date = date.fromisoformat(selected_date)
-            available_slots = services.get_available_slots_for_court(court, parsed_date)
+            available_slots = services.get_available_slots_for_court(
+                court, parsed_date
+            )
         except (Court.DoesNotExist, ValueError):
             court = None
 
@@ -62,16 +60,16 @@ def booking_create_view(request):
         form = BookingForm(request.POST, available_slots=available_slots)
 
         if not form.is_valid():
-            pass  # fall through to render with errors
+            pass
 
         elif not form.cleaned_data.get('time_slots'):
-            form.add_error('time_slots', 'Please select at least one time slot.')
+            form.add_error('time_slots', 'Please select at least one slot.')
 
         else:
-            data       = form.cleaned_data
-            slots      = data['time_slots']        # list of 'HH:MM:SS' strings
-            created    = []
-            errors     = []
+            data    = form.cleaned_data
+            slots   = data['time_slots']
+            created = []
+            errors  = []
 
             for slot_str in slots:
                 try:
@@ -88,32 +86,35 @@ def booking_create_view(request):
                     errors.append(str(e.message))
 
             if created:
-                total_hrs   = len(created)
                 total_price = sum(b.price for b in created)
                 messages.success(
                     request,
-                    f'✅ {total_hrs} slot(s) booked on {parsed_date.strftime("%b %d, %Y")} '
+                    f'✅ {len(created)} slot(s) booked on '
+                    f'{parsed_date.strftime("%b %d, %Y")} '
                     f'for {data["court"]}. '
                     f'Total: ₱{total_price} — pay on-site.'
                 )
             for err in errors:
-                messages.warning(request, f'⚠️ Skipped one slot: {err}')
+                messages.warning(request, f'⚠️ Skipped: {err}')
 
             if created:
+                if getattr(request.user, 'is_admin_or_staff', False):
+                    return redirect('bookings:admin_list')
                 return redirect('bookings:my_bookings')
 
     else:
-        # Pre-fill court/date from query params (e.g. clicking grid)
         initial = {'court': court_id, 'date': selected_date}
-        form = BookingForm(initial=initial, available_slots=available_slots)
+        form    = BookingForm(
+            initial=initial, available_slots=available_slots
+        )
 
     return render(request, 'bookings/booking_form.html', {
         'form':           form,
         'title':          'Book a Court',
-        'price_per_hour': django_settings.BOOKING_PRICE,
         'court':          court,
         'selected_date':  parsed_date,
         'slots_available': available_slots,
+        'brackets':       brackets,
     })
 
 
@@ -208,7 +209,6 @@ def admin_booking_list_view(request):
 def admin_booking_create_view(request):
     """Admin creates multi-slot booking for any user."""
     from django.conf import settings as django_settings
-    from datetime import datetime
 
     court_id      = request.GET.get('court') or request.POST.get('court')
     selected_date = request.GET.get('date')  or request.POST.get('date')
@@ -216,6 +216,7 @@ def admin_booking_create_view(request):
     court           = None
     available_slots = None
     parsed_date     = None
+    brackets        = services.get_price_brackets_display()
 
     if court_id and selected_date:
         try:
@@ -273,7 +274,7 @@ def admin_booking_create_view(request):
     return render(request, 'bookings/booking_form.html', {
         'form':           form,
         'title':          'Create Booking (Admin)',
-        'price_per_hour': django_settings.BOOKING_PRICE,
+        'brackets':       brackets,
         'court':          court,
         'selected_date':  parsed_date,
         'slots_available': available_slots,

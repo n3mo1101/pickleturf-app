@@ -14,6 +14,7 @@
                     <li class="list-group-item"><strong>Court:</strong> {{ booking.court.name }}</li>
                     <li class="list-group-item"><strong>Date:</strong> {{ booking.date|date:"F j, Y" }}</li>
                     <li class="list-group-item"><strong>Time:</strong> {{ booking.start_time|time:"g:i A" }}</li>
+                    <li class="list-group-item"><strong>Notes:</strong> {{ booking.notes }}</li>
                     <li class="list-group-item"><strong>Current Status:</strong>
                         <span class="badge bg-secondary">{{ booking.get_status_display }}</span>
                     </li>

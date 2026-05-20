@@ -1,5 +1,6 @@
 {% extends 'layouts/base.html' %}
 {% load crispy_forms_tags %}
+{% load dict_filters %}
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
@@ -13,10 +14,26 @@
             </div>
             <div class="card-body p-4">
 
-                <div class="alert alert-info mb-4">
-                    <i class="bi bi-info-circle"></i>
-                    <strong>₱{{ price_per_hour }}/hour</strong> — Pay on-site.
-                    Select one or more consecutive slots below.
+                {# ── Price Brackets ── #}
+                <div class="mb-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for bracket in brackets %}
+                        <div class="card border-0 bg-light px-3 py-2 d-flex flex-row
+                                    align-items-center gap-2">
+                            <i class="bi bi-clock text-warning"></i>
+                            <div>
+                                <div class="small fw-semibold">{{ bracket.label }}</div>
+                                <div class="text-success fw-bold small">
+                                    ₱{{ bracket.rate }}/hr
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="alert alert-info mt-2 mb-0 py-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Price varies by time slot. Pay on-site after booking.
+                    </div>
                 </div>
 
                 {# ── PHASE 1: Court + Date picker ── #}
@@ -65,9 +82,10 @@
                                         name="time_slots"
                                         value="{{ value }}"
                                         id="slot_{{ forloop.counter }}"
+                                        data-price="{{ value|get_slot_price }}"
                                     >
                                     <label class="form-check-label fw-semibold w-100"
-                                           for="slot_{{ forloop.counter }}">
+                                        for="slot_{{ forloop.counter }}">
                                         <i class="bi bi-clock me-1 text-success"></i>
                                         {{ label }}
                                     </label>
@@ -85,7 +103,7 @@
                                     <strong id="total-hours">0</strong> hour(s)
                                 </div>
                                 <div class="fs-5 fw-bold text-success">
-                                    Total: ₱<span id="total-price">0</span>
+                                    Total: ₱<span id="total-price-amount">0</span>
                                 </div>
                             </div>
                         </div>
@@ -145,27 +163,35 @@
 
 {% block extra_js %}
 <script>
-    const PRICE_PER_HOUR = {{ price_per_hour }};
-
     const checkboxes  = document.querySelectorAll('.slot-checkbox');
     const summary     = document.getElementById('price-summary');
     const totalHours  = document.getElementById('total-hours');
-    const totalPrice  = document.getElementById('total-price');
+    const totalPrice_el  = document.getElementById('total-price-amount');
     const submitBtn   = document.getElementById('submit-btn');
 
     function updateSummary() {
-        const checked = document.querySelectorAll('.slot-checkbox:checked').length;
+        const checked  = document.querySelectorAll('.slot-checkbox:checked');
+        const count    = checked.length;
 
-        if (checked > 0) {
-            totalHours.textContent = checked;
-            totalPrice.textContent = (checked * PRICE_PER_HOUR).toLocaleString();
+        if (count > 0) {
+            // Sum prices from each checked slot's data-price
+            let totalPrice = 0;
+            checked.forEach(cb => {
+                totalPrice += parseInt(cb.dataset.price || 0);
+            });
+
+            totalHours.textContent = count;
+            totalPrice_el.textContent = totalPrice.toLocaleString();
             summary.style.removeProperty('display');
             submitBtn.disabled = false;
-            submitBtn.textContent = `Confirm ${checked} Slot(s) — ₱${(checked * PRICE_PER_HOUR).toLocaleString()}`;
+            submitBtn.innerHTML =
+                `<i class="bi bi-check-circle"></i> ` +
+                `Confirm ${count} Slot(s) — ₱${totalPrice.toLocaleString()}`;
         } else {
             summary.style.setProperty('display', 'none', 'important');
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Confirm Booking';
+            submitBtn.innerHTML =
+                '<i class="bi bi-check-circle"></i> Confirm Booking';
         }
     }
 

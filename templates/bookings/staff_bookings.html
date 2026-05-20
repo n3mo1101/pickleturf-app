@@ -5,16 +5,22 @@
 <div class="pt-page-header d-flex justify-content-between align-items-center">
     <div>
         <h4 class="fw-bold">
-            <i class="bi bi-person-badge text-warning me-2"></i>
+            <i class="bi bi-person-workspace text-warning me-2"></i>
             Staff Bookings
         </h4>
-        <p class="pt-page-subtitle">Bookings you have personally created</p>
     </div>
-    <a href="{% url 'bookings:admin_create' %}"
-       class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i> Create Booking
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{% url 'bookings:admin_list' %}"
+        class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-table"></i> All
+        </a>
+        <a href="{% url 'bookings:admin_create' %}"
+        class="btn btn-success">
+            <i class="bi bi-plus-circle me-1"></i> Create Booking
+        </a>
+    </div>
 </div>
+
 
 {% if bookings %}
 <div class="card">
@@ -27,6 +33,7 @@
                     <th>Court</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Price</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -48,6 +55,7 @@
                     <td data-label="Time" class="text-nowrap">
                         {{ b.start_time|time:"g:i A" }}
                     </td>
+                    <td data-label="Price">₱{{ b.price }}</td>
                     <td data-label="Status">
                         {% if b.status == 'confirmed' %}
                         <span class="badge bg-success">Confirmed</span>

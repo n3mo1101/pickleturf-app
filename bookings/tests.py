@@ -222,3 +222,46 @@ class BookingServiceTests(TestCase):
         auto_update_booking_statuses()
         booking.refresh_from_db()
         self.assertEqual(booking.status, Booking.Status.CANCELLED)
+
+        # ── Price Bracket Tests ────────────────────────────────────
+
+        def test_booking_price_uses_bracket(self):
+            """Morning slot should use ₱300 bracket."""
+            booking = create_booking(
+                user=self.user,
+                court=self.court,
+                selected_date=self.tomorrow,
+                start_time=time(9, 0),   # 9 AM → ₱300
+            )
+            self.assertEqual(booking.price, 300)
+
+        def test_booking_price_afternoon_bracket(self):
+            """Afternoon slot should use ₱350 bracket."""
+            booking = create_booking(
+                user=self.user,
+                court=self.court,
+                selected_date=self.tomorrow,
+                start_time=time(13, 0),  # 1 PM → ₱350
+            )
+            self.assertEqual(booking.price, 350)
+
+        def test_booking_price_evening_bracket(self):
+            """Evening slot should use ₱400 bracket."""
+            booking = create_booking(
+                user=self.user,
+                court=self.court,
+                selected_date=self.tomorrow,
+                start_time=time(18, 0),  # 6 PM → ₱400
+            )
+            self.assertEqual(booking.price, 400)
+
+        def test_booking_price_cross_bracket(self):
+            """11 AM slot crosses into afternoon: 300 + 350 = 650... 
+            but since slots are 1hr, 11-12 = ₱300 entirely."""
+            booking = create_booking(
+                user=self.user,
+                court=self.court,
+                selected_date=self.tomorrow,
+                start_time=time(11, 0),  # 11 AM → entirely in morning → ₱300
+            )
+            self.assertEqual(booking.price, 300)

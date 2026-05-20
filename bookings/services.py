@@ -25,13 +25,13 @@ def get_time_slots():
 
 def get_availability(selected_date):
     """
-    Returns a dict: { time_slot: { court_id: 'available'|'booked' } }
+    Returns dict: { time_slot: { court_id: 'available'|'booked' } }
     Used to render the booking grid.
     """
+    from datetime import datetime, timedelta
     courts = Court.objects.filter(is_active=True)
     slots  = get_time_slots()
 
-    # Fetch all active bookings for this date in one query
     bookings = Booking.objects.filter(
         date=selected_date,
         status__in=[Booking.Status.PENDING, Booking.Status.CONFIRMED]
@@ -41,10 +41,16 @@ def get_availability(selected_date):
 
     grid = {}
     for slot_time, slot_label in slots:
-        grid[slot_label] = {}
+        slot_price = get_price_for_display(slot_time)
+        grid[slot_label] = {
+            'courts': {},
+            'price':   slot_price,
+        }
         for court in courts:
             is_booked = (court.id, slot_time) in booked_set
-            grid[slot_label][court] = 'booked' if is_booked else 'available'
+            grid[slot_label]['courts'][court] = (
+                'booked' if is_booked else 'available'
+            )
 
     return grid
 
@@ -79,22 +85,24 @@ def create_booking(user, court, selected_date, start_time, created_by=None, note
     if not is_slot_available(court, selected_date, start_time):
         raise ValidationError(
             f'{court.name} is already booked on '
-            f'{selected_date.strftime("%b %d")} at {start_time.strftime("%I:%M %p")}.'
+            f'{selected_date.strftime("%b %d")} at '
+            f'{start_time.strftime("%I:%M %p")}.'
         )
+
+    # Auto-calculate price based on time bracket
+    price = calculate_slot_price(start_time)
 
     booking = Booking.objects.create(
         user=user,
         court=court,
         date=selected_date,
         start_time=start_time,
-        price=settings.BOOKING_PRICE,
+        price=price, 
         created_by=created_by or user,
         notes=notes,
     )
 
-    # Create corresponding transaction record
     _create_booking_transaction(booking)
-
     return booking
 
 
@@ -138,11 +146,7 @@ def cancel_booking(booking, cancelled_by=None):
 # ── Court Availability ───────────────────────────────────────────────────────────────
 
 def get_available_slots_for_court(court, selected_date):
-    """
-    Returns list of (value, label) tuples for slots that are
-    still available for a specific court on a specific date.
-    Excludes past slots.
-    """
+    """Returns list of (value, label, price) for available slots."""
     all_slots = get_time_slots()
 
     booked_times = set(
@@ -159,7 +163,11 @@ def get_available_slots_for_court(court, selected_date):
             continue
         if is_past_slot(selected_date, slot_time):
             continue
-        available.append((slot_time.strftime('%H:%M:%S'), label))
+        price = get_price_for_display(slot_time)
+        available.append((
+            slot_time.strftime('%H:%M:%S'),
+            label,
+        ))
 
     return available
 
@@ -210,3 +218,67 @@ def auto_update_booking_statuses():
             booking.cancelled_at = now
             booking.save(update_fields=['status', 'cancelled_at'])
             # Transaction already WAIVED — no revenue impact, no change needed
+
+
+#── Pricing Calculation ───────────────────────────────────────────────────────────────
+    
+def calculate_slot_price(start_time, end_time=None):
+    """
+    Calculate price for a booking slot, handling cross-bracket slots.
+
+    Settings Config:
+      08:00 → 12:00  = ₱300  (entirely in morning bracket)
+      12:00 → 05:00  = ₱350  (entirely in afternoon bracket)
+      05:00 → 1:00  = ₱400  (entirely in evening bracket)
+    """
+    brackets = settings.BOOKING_PRICE_BRACKETS
+
+    # Auto-set end_time to start + 1 hour if not provided
+    if end_time is None:
+        dummy_date = datetime(2000, 1, 1)
+        start_dt   = datetime.combine(dummy_date, start_time)
+        end_dt     = start_dt + timedelta(hours=settings.BOOKING_SLOT_HOURS)
+        end_time   = end_dt.time()
+
+    # Convert to minutes since midnight for easier math
+    start_minutes = start_time.hour * 60 + start_time.minute
+    end_minutes   = end_time.hour   * 60 + end_time.minute
+
+    total_price = 0
+
+    for bracket_start, bracket_end, rate in brackets:
+        b_start = bracket_start * 60
+        b_end   = bracket_end   * 60
+
+        # Find overlap between slot and this bracket
+        overlap_start = max(start_minutes, b_start)
+        overlap_end   = min(end_minutes,   b_end)
+
+        if overlap_end > overlap_start:
+            overlap_hours = (overlap_end - overlap_start) / 60
+            total_price  += overlap_hours * rate
+
+    return int(total_price)
+
+
+def get_price_for_display(start_time):
+    """Return the price for a single 1-hour slot starting at start_time."""
+    from datetime import datetime, timedelta
+    dummy = datetime(2000, 1, 1)
+    end_time = (datetime.combine(dummy, start_time) + timedelta(hours=1)).time()
+    return calculate_slot_price(start_time, end_time)
+
+
+def get_price_brackets_display():
+    """Return human-readable price bracket list for templates."""
+    from django.conf import settings
+    result = []
+    for start_h, end_h, rate in settings.BOOKING_PRICE_BRACKETS:
+        from datetime import time
+        start_str = time(start_h, 0).strftime('%I:%M %p').lstrip('0')
+        end_str   = time(end_h,   0).strftime('%I:%M %p').lstrip('0')
+        result.append({
+            'label': f'{start_str} – {end_str}',
+            'rate':   rate,
+        })
+    return result

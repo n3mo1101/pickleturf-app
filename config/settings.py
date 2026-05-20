@@ -248,8 +248,14 @@ if not DEBUG:
     f"https://{host}" for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host
     ]
 
-# ─── BOOKING CONFIG ───────────────────────────────────────────────────────────
+# ─── BOOKING CONFIGURATION ──────────────────────────────────────────────────────
 BOOKING_OPENING_HOUR = 8    # 8:00 AM
-BOOKING_CLOSING_HOUR = 22   # 10:00 PM
-BOOKING_PRICE        = 300  # Default price per hour (₱)
-BOOKING_SLOT_HOURS   = 1    # Fixed 1-hour slots
+BOOKING_CLOSING_HOUR = 23   # 11:00 PM
+BOOKING_SLOT_HOURS = 1
+
+BOOKING_PRICE_BRACKETS = [
+    # (start_hour, end_hour, price_per_hour)
+    (8,  12, 300),   # Morning:   8:00 AM – 12:00 NN
+    (12, 17, 350),   # Afternoon: 12:00 NN – 5:00 PM
+    (17, 23, 400),   # Evening:   5:00 PM – 11:00 PM
+]
