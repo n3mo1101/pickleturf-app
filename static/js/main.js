@@ -1,6 +1,6 @@
 /* ============================================================
    PICKLETURF — MAIN JS
-   Sidebar · Dark Mode · FAB
+   Sidebar · Dark Mode · FAB · PWA Support 
    ============================================================ */
 
 /* ── Theme ───────────────────────────────────────────────────── */
@@ -102,4 +102,41 @@ document.addEventListener('DOMContentLoaded', function () {
             bsAlert?.close();
         }, 5000);
     });
+});
+
+/* ── PWA Install ─────────────────────────────────────────────── */
+let deferredInstallPrompt = null;
+
+// Capture the install prompt event
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+
+    // Show the install button in sidebar
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn) {
+        installBtn.style.display = 'flex';
+    }
+});
+
+function installPWA() {
+    if (!deferredInstallPrompt) return;
+
+    deferredInstallPrompt.prompt();
+
+    deferredInstallPrompt.userChoice.then(result => {
+        if (result.outcome === 'accepted') {
+            // Hide button after install
+            const installBtn = document.getElementById('pwaInstallBtn');
+            if (installBtn) installBtn.style.display = 'none';
+        }
+        deferredInstallPrompt = null;
+    });
+}
+
+// Hide install button if already installed
+window.addEventListener('appinstalled', () => {
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn) installBtn.style.display = 'none';
+    deferredInstallPrompt = null;
 });

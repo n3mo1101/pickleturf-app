@@ -1,5 +1,7 @@
 from datetime import date
 from django.shortcuts import render
+from django.http import FileResponse
+import os
 
 
 def home_view(request):
@@ -50,3 +52,20 @@ def _customer_home(request):
         'announcements':     announcements,
         'today':             today,
     })
+
+
+def offline_view(request):
+    return render(request, 'core/offline.html')
+
+
+def service_worker_view(request):
+    """Serve SW from root scope so it can intercept all requests."""
+    from django.conf import settings
+    sw_path = os.path.join(settings.BASE_DIR, 'static', 'js', 'sw.js')
+    response = FileResponse(
+        open(sw_path, 'rb'),
+        content_type='application/javascript'
+    )
+    response['Service-Worker-Allowed'] = '/'
+    response['Cache-Control'] = 'no-cache'
+    return response

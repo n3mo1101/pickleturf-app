@@ -161,6 +161,16 @@
             padding-right: 42px;
         }
     </style>
+
+    {# PWA Manifest #}
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#1B2A4A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PickleTurf">
+    <link rel="apple-touch-icon" href="{% static 'img/logo-256.png' %}">
+
 </head>
 <body>
 <div class="auth-page">
@@ -235,5 +245,22 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+
+{# PWA Service Worker Registration #}
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .then(reg => {
+                console.log('SW registered:', reg.scope);
+            })
+            .catch(err => {
+                console.log('SW registration failed:', err);
+            });
+    });
+}
+</script>
+
 </body>
 </html>

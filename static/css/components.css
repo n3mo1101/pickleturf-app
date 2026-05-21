@@ -347,6 +347,7 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
   transform: rotate(45deg);
 }
 
+
 /* ── Others ───────────────────────────────────────────────── */
 /* Pagination */
 .page-link {
@@ -369,3 +370,18 @@ label.form-label { font-weight: 600; font-size: .85rem; color: var(--text); }
 .rental-item-card { transition: all .12s ease; cursor: pointer; }
 .rental-item-card:hover { transform: translateY(-2px); }
 .rental-item-card.border-warning { border-color: var(--pt-yellow) !important; border-width: 2px !important; }
+
+
+/* ── PWA Install Button ─────────────────────────────────────── */
+#pwaInstallBtn {
+    color: var(--pt-yellow) !important;
+    border-top: 1px solid var(--sb-border);
+    margin-top: 4px;
+    padding-top: 14px;
+}
+#pwaInstallBtn:hover {
+    background: rgba(245, 197, 24, 0.15) !important;
+}
+#pwaInstallBtn i {
+    color: var(--pt-yellow) !important;
+}
