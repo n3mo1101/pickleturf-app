@@ -97,7 +97,7 @@
                 <th>Amount</th>
                 <th>Status</th>
                 <th>Date</th>
-                <th>Action</th>
+                <!-- <th>Action</th> -->
             </tr>
         </thead>
         <tbody>
@@ -140,7 +140,7 @@
                         {{ tx.created_at|time:"g:i A" }}
                     </span>
                 </td>
-                <td data-label="Action" class="td-actions">
+                <!-- <td data-label="Action" class="td-actions">
                     {% if tx.payment_status == 'pending' %}
                     <form method="post"
                           action="{% url 'transactions:mark_paid' tx.pk %}">
@@ -161,7 +161,7 @@
                     {% else %}
                     <span class="text-muted small">—</span>
                     {% endif %}
-                </td>
+                </td> -->
             </tr>
             {% empty %}
             <tr>

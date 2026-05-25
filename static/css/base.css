@@ -405,6 +405,7 @@ a:hover { color: var(--pt-navy); }
 
 /* ── 19. Utilities ─────────────────────────────────────────── */
 .text-navy    { color: var(--pt-navy) !important; }
+.text-white   { color: #e7ecf3 !important; }
 .text-yellow  { color: var(--pt-yellow) !important; }
 .bg-navy      { background: var(--pt-navy) !important; }
 .bg-yellow    { background: var(--pt-yellow) !important; }

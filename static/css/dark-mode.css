@@ -90,7 +90,7 @@
 
 /* fw-bold, fw-semibold spans */
 [data-theme="dark"] .fw-bold,
-[data-theme="dark"] .fw-semibold { color: inherit; }
+[data-theme="dark"] .fw-semibold { color: var(--text); }
 
 /* Input placeholder */
 [data-theme="dark"] ::placeholder { color: var(--text-muted) !important; opacity: 1; }
@@ -177,4 +177,22 @@
 
 [data-theme="dark"] .badge.bg-info {
     background-color: #088ca3 !important;   /* darker teal */
+}
+
+/* ── Card header bg-* overrides for dark mode ─────────────── */
+[data-theme="dark"] .card-header.bg-dark,
+[data-theme="dark"] .card-header.bg-success {
+    background: var(--bg-card) !important;
+    color: var(--text) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+[data-theme="dark"] .card-header.bg-danger {
+    background: #4a1a1a !important;
+    color: #fca5a5 !important;
+}
+
+/* ── text-navy: too dark on dark backgrounds ─────────────── */
+[data-theme="dark"] .text-navy {
+    color: var(--text) !important;
 }

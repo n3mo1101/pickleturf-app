@@ -16,7 +16,7 @@
     </div>
     <div class="col-md-3">
         <select name="status" class="form-select form-select-sm">
-            <option value="">All Statuses</option>
+            <option value="">Active</option>
             {% for val, label in status_choices %}
             <option value="{{ val }}"
                 {% if status_filter == val %}selected{% endif %}>

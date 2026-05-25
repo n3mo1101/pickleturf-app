@@ -18,7 +18,7 @@
         <form method="post" action="{% url 'openplay:admin_complete' session.pk %}"
               class="d-inline">
             {% csrf_token %}
-            <button class="btn btn-sm btn-outline-dark"
+            <button class="btn btn-sm btn-outline-success"
                     onclick="return confirm('Mark as completed?')">
                 <i class="bi bi-check2-all"></i> Complete
             </button>
