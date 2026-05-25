@@ -139,6 +139,7 @@ ACCOUNT_LOGOUT_ON_GET             = True
 ACCOUNT_ADAPTER                   = 'accounts.adapters.AccountAdapter'
 SOCIALACCOUNT_ADAPTER             = 'accounts.adapters.SocialAccountAdapter'
 ACCOUNT_FORMS                     = {'signup': 'accounts.forms.CustomSignupForm'}
+SOCIALACCOUNT_LOGIN_ON_GET        = True
 
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
