@@ -95,12 +95,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('ptOverlay')
         ?.addEventListener('click', closeSidebar);
 
-    // Dismiss alerts auto after 5s
-    document.querySelectorAll('.alert.auto-dismiss').forEach(alert => {
-        setTimeout(() => {
-            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-            bsAlert?.close();
-        }, 5000);
+    // Show flash message toasts (auto-dismiss via data-bs-delay)
+    document.querySelectorAll('#ptToastContainer .toast').forEach(toast => {
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
     });
 });
 

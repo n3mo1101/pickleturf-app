@@ -16,18 +16,26 @@
         </a>
         {% if session.status not in 'completed,cancelled' %}
         <form method="post" action="{% url 'openplay:admin_complete' session.pk %}"
-              class="d-inline">
+              class="d-inline"
+              data-pt-confirm
+              data-pt-confirm-title="Complete Session"
+              data-pt-confirm-body="Mark &quot;{{ session.title|escapejs }}&quot; as completed?"
+              data-pt-confirm-label="Complete"
+              data-pt-confirm-class="btn-success">
             {% csrf_token %}
-            <button class="btn btn-sm btn-outline-success"
-                    onclick="return confirm('Mark as completed?')">
+            <button class="btn btn-sm btn-outline-success">
                 <i class="bi bi-check2-all"></i> Complete
             </button>
         </form>
         <form method="post" action="{% url 'openplay:admin_cancel' session.pk %}"
-              class="d-inline">
+              class="d-inline"
+              data-pt-confirm
+              data-pt-confirm-title="Cancel Session"
+              data-pt-confirm-body="Cancel &quot;{{ session.title|escapejs }}&quot;?"
+              data-pt-confirm-label="Yes, Cancel"
+              data-pt-confirm-class="btn-danger">
             {% csrf_token %}
-            <button class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Cancel this session?')">
+            <button class="btn btn-sm btn-outline-danger">
                 <i class="bi bi-x-circle"></i> Cancel
             </button>
         </form>

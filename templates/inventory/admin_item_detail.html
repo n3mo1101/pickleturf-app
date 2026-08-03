@@ -75,15 +75,31 @@
                     <tbody>
                         {% for r in active_rentals %}
                         <tr>
-                            <td>{{ r.user.renter_name }}</td>
+                            <td>{{ r.renter_name }}</td>
                             <td>{{ r.rented_at|date:"M d, g:i A" }}</td>
                             <td>{{ r.quantity }}h</td>
                             <td>₱{{ r.total_cost }}</td>
                             <td>
-                                <a href="{% url 'inventory:admin_return' r.pk %}"
-                                   class="btn btn-xs btn-success btn-sm">
-                                    Return
-                                </a>
+                                <form method="post"
+                                      action="{% url 'inventory:admin_return' r.pk %}"
+                                      class="d-inline"
+                                      data-pt-confirm
+                                      data-pt-confirm-title="Return Rental"
+                                      data-pt-confirm-body="Confirm this rental has been returned? Stock will be restored."
+                                      data-pt-confirm-label="Confirm Return"
+                                      data-pt-confirm-class="btn-success"
+                                      data-pt-confirm-details='[
+                                          {"label":"Item","value":"{{ item.name|escapejs }}"},
+                                          {"label":"Quantity","value":"{{ r.quantity }}"},
+                                          {"label":"Renter","value":"{{ r.renter_name|escapejs }}"},
+                                          {"label":"Rented At","value":"{{ r.rented_at|date:"M d, g:i A" }}"},
+                                          {"label":"Total Cost","value":"₱{{ r.total_cost }}"}
+                                      ]'>
+                                    {% csrf_token %}
+                                    <button class="btn btn-xs btn-success btn-sm">
+                                        Return
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                         {% endfor %}

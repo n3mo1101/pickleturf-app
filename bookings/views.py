@@ -172,7 +172,7 @@ def booking_cancel_view(request, pk):
             messages.error(request, str(e))
         return redirect('bookings:my_bookings')
 
-    return render(request, 'bookings/booking_cancel_confirm.html', {'booking': booking})
+    return redirect('bookings:my_bookings')
 
 
 # ── Admin/Staff Views ──────────────────────────────────────────────────────────
@@ -295,10 +295,7 @@ def admin_booking_cancel_view(request, pk):
             messages.error(request, str(e))
         return redirect('bookings:admin_list')
 
-    return render(request, 'bookings/booking_cancel_confirm.html', {
-        'booking':   booking,
-        'is_admin': True,
-    })
+    return redirect('bookings:admin_list')
 
 
 @admin_or_staff_required

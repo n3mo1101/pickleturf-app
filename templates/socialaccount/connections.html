@@ -26,12 +26,16 @@
                 </div>
             </div>
         </div>
-        <form method="post" action="{% url 'socialaccount_disconnect' %}">
+        <form method="post" action="{% url 'socialaccount_disconnect' %}"
+              data-pt-confirm
+              data-pt-confirm-title="Disconnect Account"
+              data-pt-confirm-body="Disconnect your {{ account.get_provider.name }} account? You can reconnect it later."
+              data-pt-confirm-label="Disconnect"
+              data-pt-confirm-class="btn-danger">
             {% csrf_token %}
             <input type="hidden" name="account" value="{{ account.id }}">
             <button type="submit"
-                    class="btn btn-sm btn-outline-danger"
-                    onclick="return confirm('Disconnect this account?')">
+                    class="btn btn-sm btn-outline-danger">
                 <i class="bi bi-x-circle"></i> Disconnect
             </button>
         </form>

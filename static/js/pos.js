@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Confirm before submit
+    // Confirm before submit (via shared confirmation modal)
     const form = document.getElementById(formId);
     form?.addEventListener('submit', e => {
         // Rental: require renter name
@@ -95,9 +95,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const total = grandTotal?.textContent || '0.00';
         const label = isSale ? 'sale' : 'rental';
-        if (!confirm(`Process ${label} for ₱${total}?`)) {
-            e.preventDefault();
-        }
+        e.preventDefault();
+
+        window.ptConfirm?.({
+            title:        `Process ${label}`,
+            body:         `Process ${label} for ₱${total}?`,
+            confirmLabel: 'Process',
+            confirmClass: isSale ? 'btn-success' : 'btn-warning',
+            onConfirm:    () => form.submit(),
+        });
     });
 
 });

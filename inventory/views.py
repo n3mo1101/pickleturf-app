@@ -221,7 +221,7 @@ def admin_item_delete_view(request, pk):
         item.delete()
         messages.success(request, f'Item "{name}" deleted.')
         return redirect('inventory:admin_list')
-    return render(request, 'inventory/item_delete_confirm.html', {'item': item})
+    return redirect('inventory:admin_list')
 
 
 @admin_or_staff_required
@@ -395,9 +395,7 @@ def admin_rental_return_view(request, pk):
             messages.error(request, e.message)
         return redirect('inventory:admin_rental_list')
 
-    return render(request, 'inventory/rental_return_confirm.html', {
-        'rental': rental,
-    })
+    return redirect('inventory:admin_rental_list')
 
 
 # ── Admin: Categories ──────────────────────────────────────────────────────────

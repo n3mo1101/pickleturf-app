@@ -147,11 +147,21 @@
                            title="Adjust Stock">
                             <i class="bi bi-boxes"></i>
                         </a>
-                        <a href="{% url 'inventory:admin_delete' item.pk %}"
-                           class="btn btn-sm btn-outline-danger"
-                           title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </a>
+                        <form method="post"
+                              action="{% url 'inventory:admin_delete' item.pk %}"
+                              class="d-inline"
+                              data-pt-confirm
+                              data-pt-confirm-title="Delete Item"
+                              data-pt-confirm-body="Delete &quot;{{ item.name|escapejs }}&quot;? This cannot be undone."
+                              data-pt-confirm-label="Delete"
+                              data-pt-confirm-class="btn-danger">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </div>
                 </td>
             </tr>

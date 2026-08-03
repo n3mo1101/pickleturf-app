@@ -70,10 +70,27 @@
                 </td>
                 <td data-label="Action" class="td-actions">
                     {% if r.status == 'active' %}
-                    <a href="{% url 'inventory:admin_return' r.pk %}"
-                    class="btn btn-sm btn-success">
-                        <i class="bi bi-arrow-return-left"></i> Return
-                    </a>
+                    <form method="post"
+                          action="{% url 'inventory:admin_return' r.pk %}"
+                          class="d-inline"
+                          data-pt-confirm
+                          data-pt-confirm-title="Return Rental"
+                          data-pt-confirm-body="Confirm this rental has been returned? Stock will be restored."
+                          data-pt-confirm-label="Confirm Return"
+                          data-pt-confirm-class="btn-success"
+                          data-pt-confirm-details='[
+                              {"label":"Item","value":"{{ r.item.name|escapejs }}"},
+                              {"label":"Quantity","value":"{{ r.quantity }}"},
+                              {"label":"Renter","value":"{{ r.renter_name|escapejs }}"},
+                              {"label":"Contact","value":"{{ r.renter_contact|default:"—"|escapejs }}"},
+                              {"label":"Rented At","value":"{{ r.rented_at|date:"M d, Y g:i A" }}"},
+                              {"label":"Total Cost","value":"₱{{ r.total_cost }}"}
+                          ]'>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="bi bi-arrow-return-left"></i> Return
+                        </button>
+                    </form>
                     {% else %}
                     <span class="text-muted small">—</span>
                     {% endif %}

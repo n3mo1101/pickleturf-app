@@ -179,7 +179,11 @@
         <a href="{% url 'account_logout' %}"
            class="pt-nav-link"
            style="color: rgba(255,100,100,.8);"
-           onclick="return confirm('Sign out of PickleTurf?')">
+           data-pt-confirm
+           data-pt-confirm-title="Sign Out"
+           data-pt-confirm-body="Sign out of PickleTurf?"
+           data-pt-confirm-label="Sign Out"
+           data-pt-confirm-class="btn-danger">
             <i class="bi bi-box-arrow-left nav-icon"></i>
             <span>Sign Out</span>
         </a>

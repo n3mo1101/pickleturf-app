@@ -82,10 +82,14 @@
                             <i class="bi bi-check-circle-fill"></i>
                             You are confirmed for this session!
                         </div>
-                        <form method="post" action="{% url 'openplay:leave' session.pk %}">
+                        <form method="post" action="{% url 'openplay:leave' session.pk %}"
+                              data-pt-confirm
+                              data-pt-confirm-title="Leave Session"
+                              data-pt-confirm-body="Leave &quot;{{ session.title|escapejs }}&quot;? You can rejoin later if spots remain."
+                              data-pt-confirm-label="Leave"
+                              data-pt-confirm-class="btn-danger">
                             {% csrf_token %}
-                            <button class="btn btn-outline-danger btn-sm"
-                                    onclick="return confirm('Leave this session?')">
+                            <button class="btn btn-outline-danger btn-sm">
                                 <i class="bi bi-box-arrow-left"></i> Leave Session
                             </button>
                         </form>

@@ -53,13 +53,15 @@
                         </a>
                         {% if ann.is_active %}
                         <form method="post"
-                              action="{% url 'announcements:admin_takedown' ann.pk %}">
+                              action="{% url 'announcements:admin_takedown' ann.pk %}"
+                              data-pt-confirm
+                              data-pt-confirm-title="Take Down"
+                              data-pt-confirm-body="Take down &quot;{{ ann.title|escapejs }}&quot;? It will no longer be shown to users."
+                              data-pt-confirm-label="Take Down"
+                              data-pt-confirm-class="btn-danger">
                             {% csrf_token %}
                             <button type="submit"
-                                    class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm(
-                                        'Take down this announcement?'
-                                    )">
+                                    class="btn btn-sm btn-outline-danger">
                                 <i class="bi bi-eye-slash"></i> Take Down
                             </button>
                         </form>
