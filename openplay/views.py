@@ -53,10 +53,21 @@ def session_detail_view(request, pk):
         status=OpenPlayParticipant.Status.APPROVED
     ).select_related('user')
 
+    # User's pending payment for this session (pay-to-join)
+    pending_tx = None
+    if user_participant:
+        from transactions.models import Transaction
+        pending_tx = Transaction.objects.filter(
+            openplay=user_participant
+        ).order_by('-created_at').first()
+
+    from transactions.payments import payments_enabled
     return render(request, 'openplay/session_detail.html', {
         'session':          session,
         'user_participant': user_participant,
         'approved':         approved,
+        'pending_tx':       pending_tx,
+        'payments_enabled': payments_enabled(),
     })
 
 
@@ -68,11 +79,19 @@ def join_session_view(request, pk):
     if request.method == 'POST':
         try:
             services.request_join(request.user, session)
-            messages.success(
-                request,
-                f'✅ Join request sent for "{session.title}". '
-                f'Waiting for admin approval.'
-            )
+            from transactions.payments import payments_enabled
+            if payments_enabled() and session.fee > 0:
+                messages.success(
+                    request,
+                    f'✅ Join request for "{session.title}" received. '
+                    f'Complete payment to secure your spot.'
+                )
+            else:
+                messages.success(
+                    request,
+                    f'✅ Join request sent for "{session.title}". '
+                    f'Waiting for admin approval.'
+                )
         except ValidationError as e:
             messages.error(request, e.message)
 

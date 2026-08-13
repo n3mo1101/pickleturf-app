@@ -44,6 +44,17 @@ def request_join(user, session):
         user=user,
         status=OpenPlayParticipant.Status.PENDING,
     )
+
+    # Pay-to-join: paid sessions generate the transaction up front so the
+    # user can pay online (GCash). Webhook approval marks them APPROVED.
+    if session.fee > 0:
+        from transactions import payments
+        from transactions.models import Transaction
+        if payments.payments_enabled():
+            _create_openplay_transaction(
+                participant,
+                provider=Transaction.Provider.PAYMONGO,
+            )
     return participant
 
 
@@ -134,7 +145,7 @@ def cancel_session(session):
     return session
 
 
-def _create_openplay_transaction(participant):
+def _create_openplay_transaction(participant, provider=None):
     """Create a pending transaction for an approved open-play participant."""
     from transactions.models import Transaction
     # Avoid duplicate transactions
@@ -147,6 +158,7 @@ def _create_openplay_transaction(participant):
         tx_type=Transaction.TxType.OPENPLAY,
         amount=participant.session.fee,
         openplay=participant,
+        provider=provider or Transaction.Provider.ONSITE,
         description=(
             f'Open play – {participant.session.title} '
             f'on {participant.session.date}'

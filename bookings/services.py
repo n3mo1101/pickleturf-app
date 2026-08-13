@@ -109,7 +109,7 @@ def create_booking(user, court, selected_date, start_time, created_by=None, note
 def _create_booking_transaction(booking):
     """
     Auto-create a pending transaction when a booking is made.
-    It only counts toward revenue once booking is CONFIRMED.
+    It only counts toward revenue once paid (online or on-site).
     """
     from transactions.models import Transaction
     Transaction.objects.create(
@@ -117,7 +117,8 @@ def _create_booking_transaction(booking):
         tx_type=Transaction.TxType.BOOKING,
         amount=booking.price,
         booking=booking,
-        payment_status=Transaction.PaymentStatus.WAIVED,
+        payment_status=Transaction.PaymentStatus.PENDING,
+        provider=Transaction.Provider.ONSITE,
         description=f'Court booking – {booking.court} on {booking.date} at {booking.start_time}',
         created_by=booking.created_by,
     )
@@ -217,7 +218,14 @@ def auto_update_booking_statuses():
             booking.status       = Booking.Status.CANCELLED
             booking.cancelled_at = now
             booking.save(update_fields=['status', 'cancelled_at'])
-            # Transaction already WAIVED — no revenue impact, no change needed
+            # Unpaid expired booking — waive the charge (no revenue).
+            try:
+                tx = booking.transaction
+                if tx and tx.payment_status != Transaction.PaymentStatus.PAID:
+                    tx.payment_status = Transaction.PaymentStatus.WAIVED
+                    tx.save(update_fields=['payment_status'])
+            except Exception:
+                pass
 
 
 #── Pricing Calculation ───────────────────────────────────────────────────────────────

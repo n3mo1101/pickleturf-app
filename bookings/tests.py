@@ -138,7 +138,7 @@ class BookingServiceTests(TestCase):
             Transaction.objects.filter(booking=booking).exists()
         )
 
-    def test_transaction_is_waived_on_pending_booking(self):
+    def test_transaction_is_pending_on_booking(self):
         from transactions.models import Transaction
         booking = create_booking(
             user=self.user,
@@ -147,9 +147,11 @@ class BookingServiceTests(TestCase):
             start_time=self.slot_9am,
         )
         tx = Transaction.objects.get(booking=booking)
+        # Transactions start PENDING so the user can pay online (GCash);
+        # unpaid pending bookings are marked WAIVED on auto-cancel.
         self.assertEqual(
             tx.payment_status,
-            Transaction.PaymentStatus.WAIVED
+            Transaction.PaymentStatus.PENDING
         )
 
     # ── Cancellation ──────────────────────────────────────────
@@ -210,6 +212,7 @@ class BookingServiceTests(TestCase):
         self.assertEqual(booking.status, Booking.Status.COMPLETED)
 
     def test_past_pending_booking_becomes_cancelled(self):
+        from transactions.models import Transaction
         yesterday = self.today - timedelta(days=1)
         booking = Booking.objects.create(
             user=self.user,
@@ -219,9 +222,17 @@ class BookingServiceTests(TestCase):
             end_time=time(9, 0),
             status=Booking.Status.PENDING,
         )
+        tx = Transaction.objects.create(
+            user=self.user,
+            tx_type=Transaction.TxType.BOOKING,
+            amount=300,
+            booking=booking,
+        )
         auto_update_booking_statuses()
         booking.refresh_from_db()
+        tx.refresh_from_db()
         self.assertEqual(booking.status, Booking.Status.CANCELLED)
+        self.assertEqual(tx.payment_status, Transaction.PaymentStatus.WAIVED)
 
         # ── Price Bracket Tests ────────────────────────────────────
 

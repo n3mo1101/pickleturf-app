@@ -63,8 +63,25 @@
                             {{ b.get_status_display }}
                         </span>
                     {% endif %}
+                    {% if b.transaction.payment_status == 'paid' %}
+                        <span class="badge bg-success ms-1" title="Paid online/on-site">
+                            <i class="bi bi-check-circle"></i> Paid
+                        </span>
+                    {% elif b.transaction.payment_status == 'refunded' %}
+                        <span class="badge bg-danger ms-1">Refunded</span>
+                    {% elif b.transaction.payment_status == 'waived' %}
+                        <span class="badge bg-secondary ms-1">Waived</span>
+                    {% elif b.transaction and b.transaction.amount > 0 %}
+                        <span class="badge bg-warning text-dark ms-1">Unpaid</span>
+                    {% endif %}
                 </td>
                 <td data-label="Action">
+                    {% if payments_enabled and b.status == 'pending' and b.transaction and b.transaction.payment_status == 'pending' and b.transaction.amount > 0 %}
+                    <a href="{% url 'transactions:pay_online' b.transaction.pk %}"
+                       class="btn btn-sm btn-success mb-1">
+                        <i class="bi bi-credit-card"></i> Pay Now — ₱{{ b.transaction.amount }}
+                    </a>
+                    {% endif %}
                     {% if b.is_cancellable %}
                     <form method="post" action="{% url 'bookings:cancel' b.pk %}"
                           class="d-inline"
@@ -85,6 +102,8 @@
                             <i class="bi bi-x-circle"></i> Cancel
                         </button>
                     </form>
+                    {% elif b.status == 'pending' %}
+                    <span class="text-muted small">—</span>
                     {% else %}
                     <span class="text-muted small">—</span>
                     {% endif %}

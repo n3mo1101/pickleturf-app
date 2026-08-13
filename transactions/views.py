@@ -1,12 +1,17 @@
 from datetime import date
 from django.core.paginator import Paginator
 from django.db.models import Sum, Count, Q
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 from accounts.decorators import admin_or_staff_required
 from bookings.models import Booking
 from .models import Transaction
+from . import payments
 
 
 @admin_or_staff_required
@@ -82,30 +87,122 @@ def transaction_list_view(request):
 @admin_or_staff_required
 def mark_paid_view(request, pk):
     """
-    Mark a transaction as Paid.
-    If linked to a booking, also marks booking as Completed.
+    Manually mark a transaction as Paid (on-site / manual payments).
+    A linked booking is only completed if its slot has already passed.
     """
+    from datetime import datetime as dt
+    from django.utils import timezone
+
     transaction = get_object_or_404(Transaction, pk=pk)
 
     if request.method == 'POST':
+        if not transaction.paid_at:
+            transaction.paid_at = timezone.now()
         transaction.payment_status = Transaction.PaymentStatus.PAID
-        transaction.save(update_fields=['payment_status'])
+        transaction.save(update_fields=['payment_status', 'paid_at'])
 
-        # If linked to a booking, mark it completed
+        booking_completed = False
         if transaction.booking:
-            transaction.booking.status = Booking.Status.COMPLETED
-            transaction.booking.save(update_fields=['status'])
-            messages.success(
-                request,
-                f'Transaction #{pk} marked as paid. '
-                f'Booking #{transaction.booking.pk} marked as completed.'
+            booking = transaction.booking
+            slot_dt = timezone.make_aware(
+                dt.combine(booking.date, booking.start_time)
             )
-        else:
+            if slot_dt <= timezone.now() and booking.status not in (
+                Booking.Status.COMPLETED, Booking.Status.CANCELLED
+            ):
+                booking.status = Booking.Status.COMPLETED
+                booking.save(update_fields=['status'])
+                booking_completed = True
             messages.success(
                 request,
                 f'Transaction #{pk} marked as paid.'
+                + (' Booking #{booking.pk} completed.'
+                   if booking_completed else ''),
             )
+        else:
+            messages.success(request, f'Transaction #{pk} marked as paid.')
 
-    # Preserve filters when redirecting back
-    redirect_url = request.POST.get('next', 'transactions:list')
-    return redirect('transactions:list')
+    # Preserve filters when redirecting back (relative path only)
+    redirect_url = request.POST.get('next') or 'transactions:list'
+    if not redirect_url.startswith('/') or redirect_url.startswith('//'):
+        redirect_url = 'transactions:list'
+    return redirect(redirect_url)
+
+
+# ── Online Payment (PayMongo / GCash) ──────────────────────────────────────────
+
+def _back_url(transaction):
+    """Where to send the user back to after checkout/cancel."""
+    if transaction.booking:
+        return ('bookings:my_bookings', ())
+    if transaction.openplay:
+        return ('openplay:detail', (transaction.openplay.session_id,))
+    return ('transactions:list', ())
+
+
+@login_required
+def checkout_view(request, pk):
+    """Create a PayMongo hosted checkout session and redirect to it."""
+    tx = get_object_or_404(Transaction, pk=pk)
+
+    # Only the owner (or an admin/staff member) may pay a transaction.
+    if tx.user and tx.user != request.user and not request.user.is_admin_or_staff:
+        messages.error(request, 'You are not allowed to pay this transaction.')
+        return redirect('core:home')
+    if not tx.user and not request.user.is_admin_or_staff:
+        messages.error(request, 'You are not allowed to pay this transaction.')
+        return redirect('core:home')
+
+    if tx.tx_type not in (Transaction.TxType.BOOKING, Transaction.TxType.OPENPLAY):
+        messages.error(request, 'This transaction cannot be paid online.')
+        return redirect(*_back_url(tx))
+
+    try:
+        base_url = settings.SITE_URL or request.build_absolute_uri('/')[:-1]
+        checkout_url = payments.create_checkout(tx, base_url=base_url)
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect(*_back_url(tx))
+
+    return redirect(checkout_url)
+
+
+@login_required
+def payment_result_view(request, pk, outcome):
+    """Friendly page shown after returning from the payment provider."""
+    tx = get_object_or_404(Transaction, pk=pk)
+
+    if tx.user and tx.user != request.user and not request.user.is_admin_or_staff:
+        messages.error(request, 'You are not allowed to view this transaction.')
+        return redirect('core:home')
+
+    return render(request, 'transactions/payment_result.html', {
+        'transaction': tx,
+        'outcome':     outcome if outcome in ('success', 'cancelled') else 'cancelled',
+    })
+
+
+@csrf_exempt
+def webhook_view(request):
+    """PayMongo webhook endpoint — signature-verified payment events."""
+    if request.method != 'POST':
+        return HttpResponseForbidden('Method not allowed')
+
+    payload = request.body.decode('utf-8', errors='replace')
+    header = (
+        request.headers.get('Paymongo-Webhook-Signature')
+        or request.headers.get('Paymongo-Signature')
+        or ''
+    )
+
+    if not payments.verify_webhook_signature(payload, header):
+        return HttpResponseForbidden('Invalid signature')
+
+    try:
+        import json
+        data = json.loads(payload)
+    except ValueError:
+        return HttpResponseForbidden('Invalid payload')
+
+    payments.handle_webhook_payload(data)
+    return HttpResponse('OK')

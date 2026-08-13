@@ -260,3 +260,13 @@ BOOKING_PRICE_BRACKETS = [
     (12, 17, 350),   # Afternoon: 12:00 NN – 5:00 PM
     (17, 23, 400),   # Evening:   5:00 PM – 11:00 PM
 ]
+
+# ─── PAYMENTS (PayMongo) ───────────────────────────────────────────────────────
+PAYMONGO_SECRET_KEY   = os.environ.get('PAYMONGO_SECRET_KEY', '')
+PAYMONGO_PUBLIC_KEY   = os.environ.get('PAYMONGO_PUBLIC_KEY', '')
+PAYMONGO_WEBHOOK_SECRET = os.environ.get('PAYMONGO_WEBHOOK_SECRET', '')
+PAYMONGO_API_BASE     = os.environ.get('PAYMONGO_API_BASE', 'https://api.paymongo.com')
+SITE_URL              = os.environ.get('SITE_URL', '')
+
+# Online payments are only offered when a PayMongo secret key is configured.
+PAYMENTS_ENABLED = bool(PAYMONGO_SECRET_KEY)

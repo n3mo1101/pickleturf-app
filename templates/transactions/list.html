@@ -96,8 +96,9 @@
                 <th>Description</th>
                 <th>Amount</th>
                 <th>Status</th>
+                <th>Payment</th>
                 <th>Date</th>
-                <!-- <th>Action</th> -->
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
@@ -134,38 +135,55 @@
                         <span class="badge bg-secondary">Waived</span>
                     {% endif %}
                 </td>
+                <td data-label="Payment" class="small">
+                    {% if tx.provider == 'paymongo' %}
+                        <span class="badge bg-dark">
+                            <i class="bi bi-credit-card me-1"></i>Online
+                        </span>
+                        {% if tx.payment_method %}
+                        <span class="badge bg-secondary">{{ tx.payment_method|upper }}</span>
+                        {% endif %}
+                        {% if tx.provider_payment_id %}
+                        <div class="text-muted" style="font-size:.7rem;">
+                            {{ tx.provider_payment_id }}
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-light text-muted border">On-site</span>
+                    {% endif %}
+                </td>
                 <td data-label="Date" class="text-muted small text-nowrap">
                     {{ tx.created_at|date:"M d, Y" }}<br>
                     <span style="font-size:.7rem;">
                         {{ tx.created_at|time:"g:i A" }}
                     </span>
                 </td>
-                <!-- <td data-label="Action" class="td-actions">
+                <td data-label="Action" class="td-actions">
                     {% if tx.payment_status == 'pending' %}
                     <form method="post"
-                          action="{% url 'transactions:mark_paid' tx.pk %}">
+                          action="{% url 'transactions:mark_paid' tx.pk %}"
+                          class="d-inline"
+                          data-pt-confirm
+                          data-pt-confirm-title="Mark as Paid"
+                          data-pt-confirm-body="Mark transaction #{{ tx.pk }} as paid?"
+                          data-pt-confirm-label="Mark Paid"
+                          data-pt-confirm-class="btn-success">
                         {% csrf_token %}
                         <input type="hidden" name="next"
                                value="{{ request.get_full_path }}">
                         <button type="submit"
-                                class="btn btn-sm btn-success"
-                                onclick="return confirm(
-                                    'Mark transaction #{{ tx.pk }} as paid?'
-                                    {% if tx.booking %}
-                                    + '\nThis will also mark Booking #{{ tx.booking.pk }} as Completed.'
-                                    {% endif %}
-                                )">
+                                class="btn btn-sm btn-success">
                             <i class="bi bi-check-circle"></i> Mark Paid
                         </button>
                     </form>
                     {% else %}
                     <span class="text-muted small">—</span>
                     {% endif %}
-                </td> -->
+                </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center text-muted py-4">
+                <td colspan="8" class="text-center text-muted py-4">
                     No transactions found.
                 </td>
             </tr>

@@ -10,6 +10,7 @@ from accounts.decorators import admin_or_staff_required
 from .forms import BookingForm, AdminBookingForm
 from .models import Booking
 from . import services
+from transactions.payments import payments_enabled
 
 
 # ── Customer Views ─────────────────────────────────────────────────────────────
@@ -156,6 +157,7 @@ def my_bookings_view(request):
         'bookings':       bookings,
         'total_bookings': summary['total_bookings'] or 0,
         'total_spent':    summary['total_spent']    or 0,
+        'payments_enabled': payments_enabled(),
     })
 
 
