@@ -270,3 +270,5 @@ SITE_URL              = os.environ.get('SITE_URL', '')
 
 # Online payments are only offered when a PayMongo secret key is configured.
 PAYMENTS_ENABLED = bool(PAYMONGO_SECRET_KEY)
+
+# PAYMENTS_ENABLED = True # Testing purposes, set to True for now. Change to the line above in production.

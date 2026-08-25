@@ -70,6 +70,13 @@
                     {% elif b.status == 'completed' %}<span class="badge bg-secondary">Completed</span>
                     {% else %}<span class="badge bg-warning text-dark">{{ b.get_status_display }}</span>
                     {% endif %}
+                    {% if b.transaction %}
+                        {% if b.transaction.payment_status == 'paid' %}<span class="badge bg-success ms-1">Paid</span>
+                        {% elif b.transaction.payment_status == 'pending' %}<span class="badge bg-warning text-dark ms-1">Unpaid</span>
+                        {% elif b.transaction.payment_status == 'waived' %}<span class="badge bg-secondary ms-1">Waived</span>
+                        {% elif b.transaction.payment_status == 'refunded' %}<span class="badge bg-danger ms-1">Refunded</span>
+                        {% endif %}
+                    {% endif %}
                 </td>
                 <td data-label="Actions" class="td-actions">
                     <div class="d-flex gap-1">
@@ -77,11 +84,13 @@
                            class="btn btn-xs btn-outline-primary btn-sm">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        {% if b.status == 'confirmed' %}
-                        <a href="{% url 'bookings:admin_cancel' b.pk %}"
-                           class="btn btn-xs btn-outline-danger btn-sm">
-                            <i class="bi bi-x-circle"></i>
-                        </a>
+                        {% if b.is_cancellable %}
+                        <form method="post" action="{% url 'bookings:admin_cancel' b.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-xs btn-outline-danger btn-sm">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </form>
                         {% endif %}
                     </div>
                 </td>

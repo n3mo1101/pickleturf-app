@@ -79,7 +79,7 @@
                     {% if payments_enabled and b.status == 'pending' and b.transaction and b.transaction.payment_status == 'pending' and b.transaction.amount > 0 %}
                     <a href="{% url 'transactions:pay_online' b.transaction.pk %}"
                        class="btn btn-sm btn-success mb-1">
-                        <i class="bi bi-credit-card"></i> Pay Now — ₱{{ b.transaction.amount }}
+                        <i class="bi bi-credit-card"></i> Pay Now
                     </a>
                     {% endif %}
                     {% if b.is_cancellable %}
@@ -102,10 +102,14 @@
                             <i class="bi bi-x-circle"></i> Cancel
                         </button>
                     </form>
-                    {% elif b.status == 'pending' %}
-                    <span class="text-muted small">—</span>
-                    {% else %}
-                    <span class="text-muted small">—</span>
+                    {% endif %}
+                    {# Show — when neither Pay Now nor Cancel is available #}
+                    {% if not b.is_cancellable %}
+                        {% if payments_enabled and b.status == 'pending' and b.transaction and b.transaction.payment_status == 'pending' and b.transaction.amount > 0 %}
+                            {# Pay Now already shown, no dash #}
+                        {% else %}
+                            <span class="text-muted small">—</span>
+                        {% endif %}
                     {% endif %}
                 </td>
             </tr>

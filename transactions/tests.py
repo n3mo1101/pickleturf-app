@@ -71,6 +71,7 @@ class WebhookSignatureTests(BaseTestCase):
         sig = hmac.new('whsk_test_abc123'.encode(), f'{old_ts}.{payload}'.encode(), hashlib.sha256).hexdigest()
         self.assertFalse(payments.verify_webhook_signature(payload, f't={old_ts},te={sig},li='))
 
+    @override_settings(PAYMONGO_SECRET_KEY='', PAYMENTS_ENABLED=False)
     def test_disabled_payments(self):
         self.assertFalse(payments.payments_enabled())
 
@@ -82,6 +83,7 @@ class BookingPaymentTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(9, 0),
+            payment_method='online',
         )
         tx = b.transaction
         self.assertEqual(tx.payment_status, Transaction.PaymentStatus.PENDING)
@@ -94,6 +96,7 @@ class BookingPaymentTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(10, 0),
+            payment_method='online',
         )
         tx = b.transaction
         payload = json.dumps({
@@ -131,6 +134,7 @@ class BookingPaymentTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(11, 0),
+            payment_method='online',
         )
         tx = b.transaction
         payload = json.loads(json.dumps({
@@ -167,6 +171,7 @@ class BookingPaymentTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(12, 0),
+            payment_method='online',
         )
         tx = b.transaction
         payload = json.loads(json.dumps({
@@ -197,6 +202,7 @@ class BookingPaymentTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(13, 0),
+            payment_method='online',
         )
         client = Client()
         resp = client.post(
@@ -213,6 +219,7 @@ class BookingPaymentTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(14, 0),
+            payment_method='online',
         )
         tx = b.transaction
         payload = json.dumps({
@@ -263,6 +270,7 @@ class OpenPlayPaymentTests(BaseTestCase):
         self.assertEqual(tx.amount, sess.fee)
         self.assertEqual(tx.provider, Transaction.Provider.PAYMONGO)
 
+    @override_settings(PAYMONGO_SECRET_KEY='', PAYMENTS_ENABLED=False)
     def test_join_paid_session_no_tx_when_payments_disabled(self):
         sess = self._session()
         from openplay import services
@@ -319,6 +327,7 @@ class CheckoutViewTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(15, 0),
+            payment_method='online',
         )
         tx = b.transaction
         mock_post.return_value.status_code = 200
@@ -344,6 +353,7 @@ class CheckoutViewTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(16, 0),
+            payment_method='online',
         )
         tx = b.transaction
         other = User.objects.create_user(
@@ -363,6 +373,7 @@ class CheckoutViewTests(BaseTestCase):
             user=self.user, court=self.court,
             selected_date=date.today() + timedelta(days=1),
             start_time=dtime(17, 0),
+            payment_method='online',
         )
         tx = b.transaction
         tx.provider_checkout_id = 'cs_existing'

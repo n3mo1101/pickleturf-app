@@ -74,9 +74,10 @@ def is_past_slot(selected_date, start_time):
 
 # ── Booking Creation ───────────────────────────────────────────────────────────
 
-def create_booking(user, court, selected_date, start_time, created_by=None, notes=''):
+def create_booking(user, court, selected_date, start_time, created_by=None, notes='', payment_method='onsite'):
     """
     Create a booking after validating availability.
+    payment_method: 'onsite' (default) → CONFIRMED, 'online' → PENDING until PayMongo webhook.
     Raises ValidationError on conflict.
     """
     if is_past_slot(selected_date, start_time):
@@ -92,33 +93,45 @@ def create_booking(user, court, selected_date, start_time, created_by=None, note
     # Auto-calculate price based on time bracket
     price = calculate_slot_price(start_time)
 
+    # Decide status/provider based on payment method
+    from transactions.payments import payments_enabled
+    is_online = (payment_method == 'online' and payments_enabled())
+
     booking = Booking.objects.create(
         user=user,
         court=court,
         date=selected_date,
         start_time=start_time,
-        price=price, 
+        price=price,
+        status=Booking.Status.PENDING if is_online else Booking.Status.CONFIRMED,
         created_by=created_by or user,
         notes=notes,
     )
 
-    _create_booking_transaction(booking)
+    _create_booking_transaction(
+        booking,
+        provider='paymongo' if is_online else 'onsite',
+    )
     return booking
 
 
-def _create_booking_transaction(booking):
+def _create_booking_transaction(booking, provider='onsite'):
     """
     Auto-create a pending transaction when a booking is made.
     It only counts toward revenue once paid (online or on-site).
     """
     from transactions.models import Transaction
+    provider_value = (
+        Transaction.Provider.PAYMONGO if provider == 'paymongo'
+        else Transaction.Provider.ONSITE
+    )
     Transaction.objects.create(
         user=booking.user,
         tx_type=Transaction.TxType.BOOKING,
         amount=booking.price,
         booking=booking,
         payment_status=Transaction.PaymentStatus.PENDING,
-        provider=Transaction.Provider.ONSITE,
+        provider=provider_value,
         description=f'Court booking – {booking.court} on {booking.date} at {booking.start_time}',
         created_by=booking.created_by,
     )

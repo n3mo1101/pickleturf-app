@@ -7,7 +7,7 @@ from django.db import models
 from django.utils import timezone
 from courts.models import Court
 from accounts.decorators import admin_or_staff_required
-from .forms import BookingForm, AdminBookingForm
+from .forms import BookingForm
 from .models import Booking
 from . import services
 from transactions.payments import payments_enabled
@@ -46,6 +46,7 @@ def booking_create_view(request):
     available_slots = None
     parsed_date     = None
     brackets        = services.get_price_brackets_display()
+    is_admin = getattr(request.user, 'is_admin_or_staff', False)
 
     if court_id and selected_date:
         try:
@@ -58,7 +59,9 @@ def booking_create_view(request):
             court = None
 
     if request.method == 'POST':
-        form = BookingForm(request.POST, available_slots=available_slots)
+        # Admin walk-in: hide online completely, force pay on-site
+        effective_payments = False if is_admin else payments_enabled()
+        form = BookingForm(request.POST, available_slots=available_slots, payments_enabled=effective_payments)
 
         if not form.is_valid():
             pass
@@ -69,6 +72,11 @@ def booking_create_view(request):
         else:
             data    = form.cleaned_data
             slots   = data['time_slots']
+            payment_method = data.get('payment_method') or 'onsite'
+            if is_admin:
+                payment_method = 'onsite'
+            elif not payments_enabled():
+                payment_method = 'onsite'
             created = []
             errors  = []
 
@@ -81,6 +89,7 @@ def booking_create_view(request):
                         selected_date=data['date'],
                         start_time=t,
                         notes=data.get('notes', ''),
+                        payment_method=payment_method,
                     )
                     created.append(booking)
                 except ValidationError as e:
@@ -88,34 +97,60 @@ def booking_create_view(request):
 
             if created:
                 total_price = sum(b.price for b in created)
-                messages.success(
-                    request,
-                    f'✅ {len(created)} slot(s) booked on '
-                    f'{parsed_date.strftime("%b %d, %Y")} '
-                    f'for {data["court"]}. '
-                    f'Total: ₱{total_price} — pay on-site.'
-                )
+                if payment_method == 'online' and payments_enabled() and not is_admin:
+                    messages.success(
+                        request,
+                        f'✅ {len(created)} slot(s) reserved on '
+                        f'{parsed_date.strftime("%b %d, %Y")} '
+                        f'for {data["court"]}. '
+                        f'Total: ₱{total_price} — redirecting to payment...'
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f'✅ {len(created)} slot(s) booked on '
+                        f'{parsed_date.strftime("%b %d, %Y")} '
+                        f'for {data["court"]}. '
+                        f'Total: ₱{total_price} — confirmed, pay on-site.'
+                    )
             for err in errors:
                 messages.warning(request, f'⚠️ Skipped: {err}')
 
             if created:
-                if getattr(request.user, 'is_admin_or_staff', False):
+                if is_admin:
                     return redirect('bookings:admin_list')
+                # Online → redirect directly to PayMongo checkout for first booking
+                if payment_method == 'online' and payments_enabled():
+                    try:
+                        first_tx = created[0].transaction
+                        # If multiple slots, remaining Pay Now buttons stay on My Bookings
+                        if len(created) > 1:
+                            messages.info(request, f'{len(created)-1} other slot(s) can be paid via "Pay Now" on My Bookings.')
+                        from django.conf import settings as _settings
+                        base_url = _settings.SITE_URL or request.build_absolute_uri('/')[:-1]
+                        from transactions.payments import create_checkout
+                        checkout_url = create_checkout(first_tx, base_url=base_url)
+                        return redirect(checkout_url)
+                    except Exception as e:
+                        messages.warning(request, f'Online checkout not available: {e}. Use "Pay Now" on My Bookings.')
                 return redirect('bookings:my_bookings')
 
     else:
-        initial = {'court': court_id, 'date': selected_date}
+        initial = {'court': court_id, 'date': selected_date, 'payment_method': 'onsite'}
+        effective_payments = False if is_admin else payments_enabled()
         form    = BookingForm(
-            initial=initial, available_slots=available_slots
+            initial=initial, available_slots=available_slots, payments_enabled=effective_payments
         )
 
     return render(request, 'bookings/booking_form.html', {
         'form':           form,
-        'title':          'Book a Court',
+        'title':          'Book a Court' if not is_admin else 'Book a Court (Walk-in)',
         'court':          court,
         'selected_date':  parsed_date,
         'slots_available': available_slots,
         'brackets':       brackets,
+        'payments_enabled': False if is_admin else payments_enabled(),
+        'is_admin': is_admin,
     })
 
 
@@ -209,79 +244,9 @@ def admin_booking_list_view(request):
 
 @admin_or_staff_required
 def admin_booking_create_view(request):
-    """Admin creates multi-slot booking for any user."""
-    from django.conf import settings as django_settings
-
-    court_id      = request.GET.get('court') or request.POST.get('court')
-    selected_date = request.GET.get('date')  or request.POST.get('date')
-
-    court           = None
-    available_slots = None
-    parsed_date     = None
-    brackets        = services.get_price_brackets_display()
-
-    if court_id and selected_date:
-        try:
-            court           = Court.objects.get(pk=court_id, is_active=True)
-            parsed_date     = date.fromisoformat(selected_date)
-            available_slots = services.get_available_slots_for_court(court, parsed_date)
-        except (Court.DoesNotExist, ValueError):
-            court = None
-
-    if request.method == 'POST':
-        form = AdminBookingForm(request.POST, available_slots=available_slots)
-
-        if not form.is_valid():
-            pass
-
-        elif not form.cleaned_data.get('time_slots'):
-            form.add_error('time_slots', 'Please select at least one time slot.')
-
-        else:
-            data    = form.cleaned_data
-            slots   = data['time_slots']
-            created = []
-            errors  = []
-
-            for slot_str in slots:
-                try:
-                    t = datetime.strptime(slot_str, '%H:%M:%S').time()
-                    booking = services.create_booking(
-                        user=data['user'],
-                        court=data['court'],
-                        selected_date=data['date'],
-                        start_time=t,
-                        created_by=request.user,
-                        notes=data.get('notes', ''),
-                    )
-                    created.append(booking)
-                except ValidationError as e:
-                    errors.append(str(e.message))
-
-            if created:
-                messages.success(
-                    request,
-                    f'{len(created)} booking(s) created for {data["user"].full_name}.'
-                )
-            for err in errors:
-                messages.warning(request, f'Skipped: {err}')
-
-            if created:
-                return redirect('bookings:admin_list')
-
-    else:
-        initial = {'court': court_id, 'date': selected_date}
-        form = AdminBookingForm(initial=initial, available_slots=available_slots)
-
-    return render(request, 'bookings/booking_form.html', {
-        'form':           form,
-        'title':          'Create Booking (Admin)',
-        'brackets':       brackets,
-        'court':          court,
-        'selected_date':  parsed_date,
-        'slots_available': available_slots,
-        'is_admin':       True,
-    })
+    """Deprecated admin booking — gracefully redirects to unified booking form."""
+    from django.shortcuts import redirect
+    return redirect('bookings:create')
 
 
 @admin_or_staff_required

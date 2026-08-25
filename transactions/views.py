@@ -155,14 +155,16 @@ def checkout_view(request, pk):
 
     if tx.tx_type not in (Transaction.TxType.BOOKING, Transaction.TxType.OPENPLAY):
         messages.error(request, 'This transaction cannot be paid online.')
-        return redirect(*_back_url(tx))
+        back_name, back_args = _back_url(tx)
+        return redirect(back_name, *back_args)
 
     try:
         base_url = settings.SITE_URL or request.build_absolute_uri('/')[:-1]
         checkout_url = payments.create_checkout(tx, base_url=base_url)
     except Exception as e:
         messages.error(request, str(e))
-        return redirect(*_back_url(tx))
+        back_name, back_args = _back_url(tx)
+        return redirect(back_name, *back_args)
 
     return redirect(checkout_url)
 

@@ -83,14 +83,31 @@ class BookingServiceTests(TestCase):
 
     # ── Booking Creation ──────────────────────────────────────
 
-    def test_booking_created_with_pending_status(self):
+    def test_booking_created_with_confirmed_status_onsite(self):
+        """Default (onsite) bookings are CONFIRMED."""
         booking = create_booking(
             user=self.user,
             court=self.court,
             selected_date=self.tomorrow,
             start_time=self.slot_9am,
         )
-        self.assertEqual(booking.status, Booking.Status.PENDING)
+        self.assertEqual(booking.status, Booking.Status.CONFIRMED)
+
+    def test_booking_created_with_pending_status_online(self):
+        """Online bookings are PENDING until payment."""
+        from django.test import override_settings
+        with override_settings(PAYMONGO_SECRET_KEY='sk_test_123', PAYMENTS_ENABLED=True, SITE_URL='https://example.com'):
+            booking = create_booking(
+                user=self.user,
+                court=self.court,
+                selected_date=self.tomorrow,
+                start_time=self.slot_9am,
+                payment_method='online',
+            )
+            self.assertEqual(booking.status, Booking.Status.PENDING)
+            from transactions.models import Transaction
+            tx = booking.transaction
+            self.assertEqual(tx.provider, Transaction.Provider.PAYMONGO)
 
     def test_booking_end_time_auto_set(self):
         booking = create_booking(
@@ -234,45 +251,61 @@ class BookingServiceTests(TestCase):
         self.assertEqual(booking.status, Booking.Status.CANCELLED)
         self.assertEqual(tx.payment_status, Transaction.PaymentStatus.WAIVED)
 
-        # ── Price Bracket Tests ────────────────────────────────────
+    def test_cancel_future_pending_booking(self):
+        """PENDING future bookings should now be cancellable (regression fix)."""
+        booking = create_booking(
+            user=self.user,
+            court=self.court,
+            selected_date=self.tomorrow,
+            start_time=self.slot_9am,
+            payment_method='onsite',
+        )
+        # Force to PENDING to simulate online reservation
+        booking.status = Booking.Status.PENDING
+        booking.save(update_fields=['status'])
+        self.assertTrue(booking.is_cancellable)
+        cancelled = cancel_booking(booking)
+        self.assertEqual(cancelled.status, Booking.Status.CANCELLED)
 
-        def test_booking_price_uses_bracket(self):
-            """Morning slot should use ₱300 bracket."""
-            booking = create_booking(
-                user=self.user,
-                court=self.court,
-                selected_date=self.tomorrow,
-                start_time=time(9, 0),   # 9 AM → ₱300
-            )
-            self.assertEqual(booking.price, 300)
+    # ── Price Bracket Tests ────────────────────────────────────
 
-        def test_booking_price_afternoon_bracket(self):
-            """Afternoon slot should use ₱350 bracket."""
-            booking = create_booking(
-                user=self.user,
-                court=self.court,
-                selected_date=self.tomorrow,
-                start_time=time(13, 0),  # 1 PM → ₱350
-            )
-            self.assertEqual(booking.price, 350)
+    def test_booking_price_uses_bracket(self):
+        """Morning slot should use ₱300 bracket."""
+        booking = create_booking(
+            user=self.user,
+            court=self.court,
+            selected_date=self.tomorrow,
+            start_time=time(9, 0),   # 9 AM → ₱300
+        )
+        self.assertEqual(booking.price, 300)
 
-        def test_booking_price_evening_bracket(self):
-            """Evening slot should use ₱400 bracket."""
-            booking = create_booking(
-                user=self.user,
-                court=self.court,
-                selected_date=self.tomorrow,
-                start_time=time(18, 0),  # 6 PM → ₱400
-            )
-            self.assertEqual(booking.price, 400)
+    def test_booking_price_afternoon_bracket(self):
+        """Afternoon slot should use ₱350 bracket."""
+        booking = create_booking(
+            user=self.user,
+            court=self.court,
+            selected_date=self.tomorrow,
+            start_time=time(13, 0),  # 1 PM → ₱350
+        )
+        self.assertEqual(booking.price, 350)
 
-        def test_booking_price_cross_bracket(self):
-            """11 AM slot crosses into afternoon: 300 + 350 = 650... 
-            but since slots are 1hr, 11-12 = ₱300 entirely."""
-            booking = create_booking(
-                user=self.user,
-                court=self.court,
-                selected_date=self.tomorrow,
-                start_time=time(11, 0),  # 11 AM → entirely in morning → ₱300
-            )
-            self.assertEqual(booking.price, 300)
+    def test_booking_price_evening_bracket(self):
+        """Evening slot should use ₱400 bracket."""
+        booking = create_booking(
+            user=self.user,
+            court=self.court,
+            selected_date=self.tomorrow,
+            start_time=time(18, 0),  # 6 PM → ₱400
+        )
+        self.assertEqual(booking.price, 400)
+
+    def test_booking_price_cross_bracket(self):
+        """11 AM slot crosses into afternoon: 300 + 350 = 650...
+        but since slots are 1hr, 11-12 = ₱300 entirely."""
+        booking = create_booking(
+            user=self.user,
+            court=self.court,
+            selected_date=self.tomorrow,
+            start_time=time(11, 0),  # 11 AM → entirely in morning → ₱300
+        )
+        self.assertEqual(booking.price, 300)

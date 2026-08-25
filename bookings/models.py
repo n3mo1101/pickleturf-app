@@ -101,11 +101,11 @@ class Booking(models.Model):
 
     @property
     def is_cancellable(self):
-        """Allow cancellation only if booking is in the future."""
+        """Allow cancellation if pending or confirmed and still in the future."""
         from datetime import datetime
         booking_dt = datetime.combine(self.date, self.start_time)
         booking_dt = timezone.make_aware(booking_dt)
         return (
-            self.status == self.Status.CONFIRMED
+            self.status in (self.Status.PENDING, self.Status.CONFIRMED)
             and booking_dt > timezone.now()
         )
