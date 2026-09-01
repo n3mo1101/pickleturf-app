@@ -7,6 +7,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+import logging
+import json
+
+logger = logging.getLogger(__name__)
 
 from accounts.decorators import admin_or_staff_required
 from bookings.models import Booking
@@ -178,6 +182,38 @@ def payment_result_view(request, pk, outcome):
         messages.error(request, 'You are not allowed to view this transaction.')
         return redirect('core:home')
 
+    # Fallback polling: if webhook missed and checkout is paid, fulfill now
+    if outcome == 'success' and tx.payment_status == Transaction.PaymentStatus.PENDING and tx.provider_checkout_id:
+        try:
+            import requests
+            from . import payments as _payments
+            # Try to fetch checkout session status directly from PayMongo
+            base = settings.PAYMONGO_API_BASE or 'https://api.paymongo.com'
+            # Use v1 checkout_sessions retrieval (PayMongo supports both v1/v2)
+            resp = requests.get(
+                f'{base}/v1/checkout_sessions/{tx.provider_checkout_id}',
+                headers=_payments._api_headers(),
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                cs_data = resp.json().get('data', {})
+                attrs = cs_data.get('attributes') or {}
+                # If checkout is paid, it will have payments array with paid status
+                payments = attrs.get('payments') or []
+                is_paid = any((p.get('attributes') or {}).get('status') == 'paid' for p in payments) or attrs.get('paid_at') or attrs.get('status') == 'active' and payments
+                if payments and attrs.get('reference_number') == str(tx.pk):
+                    # Reuse webhook fulfillment path with checkout attributes
+                    _payments.handle_webhook_payload({
+                        'data': {
+                            'type': 'checkout_session.payment.paid',
+                            'data': {'id': cs_data.get('id'), 'attributes': attrs}
+                        }
+                    })
+                    tx.refresh_from_db()
+                    logger.info("payment_result polling fulfilled tx=%s status=%s", tx.pk, tx.payment_status)
+        except Exception as e:
+            logger.warning("payment_result polling failed tx=%s err=%s", tx.pk, e)
+
     return render(request, 'transactions/payment_result.html', {
         'transaction': tx,
         'outcome':     outcome if outcome in ('success', 'cancelled') else 'cancelled',
@@ -188,6 +224,7 @@ def payment_result_view(request, pk, outcome):
 def webhook_view(request):
     """PayMongo webhook endpoint — signature-verified payment events."""
     if request.method != 'POST':
+        logger.warning("webhook non-POST %s", request.method)
         return HttpResponseForbidden('Method not allowed')
 
     payload = request.body.decode('utf-8', errors='replace')
@@ -198,13 +235,21 @@ def webhook_view(request):
     )
 
     if not payments.verify_webhook_signature(payload, header):
+        logger.warning("webhook invalid sig header=%s payload_prefix=%s", header[:200], payload[:500])
         return HttpResponseForbidden('Invalid signature')
 
     try:
-        import json
         data = json.loads(payload)
     except ValueError:
+        logger.warning("webhook invalid JSON payload=%s", payload[:1000])
         return HttpResponseForbidden('Invalid payload')
 
-    payments.handle_webhook_payload(data)
-    return HttpResponse('OK')
+    logger.info("webhook received header=%s payload_type=%s", header[:150], (data.get('data') or {}).get('type'))
+    result = payments.handle_webhook_payload(data)
+    if result:
+        logger.info("webhook handled tx=%s status=%s", result.pk, result.payment_status)
+        return HttpResponse(f'OK tx={result.pk} paid')
+    else:
+        # Still 200 to avoid PayMongo retry storm, but log for debugging
+        logger.warning("webhook handled but no tx fulfilled payload=%s", payload[:2000])
+        return HttpResponse('OK ignored: no tx matched')

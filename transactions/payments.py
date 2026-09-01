@@ -193,17 +193,25 @@ def _parse_event(payload):
     v2 hosted checkout:
         data.type = checkout_session.payment.paid
         data.data.attributes = checkout session attributes
-    v1 payments:
+    v1 payments / event wrapper:
         data.type = event
-        data.attributes.type = payment.paid / payment.failed
-        data.attributes.data = payment object
+        data.attributes.type = payment.paid / checkout_session.payment.paid
+        data.attributes.data = payment object OR {type: checkout_session, attributes: {...}}
     """
     data = (payload or {}).get('data') or {}
     event_type = data.get('type', '')
     attributes = data.get('attributes') or {}
 
     if event_type == 'event':
-        return attributes.get('type', ''), attributes.get('data') or {}
+        inner_type = attributes.get('type', '')
+        inner_data = attributes.get('data') or {}
+        # inner_data may be {type: checkout_session, attributes: {reference_number...}}
+        # unwrap to attributes if needed
+        if isinstance(inner_data, dict) and inner_data.get('type') == 'checkout_session' and 'attributes' in inner_data:
+            return inner_type, inner_data.get('attributes') or {}
+        # For payment object keep full object (with id) so pay_id can be extracted,
+        # _fulfill_paid will unwrap attributes as needed.
+        return inner_type, inner_data
 
     if event_type in ('checkout_session.payment.paid', 'checkout_session.payment.failed'):
         return event_type, (data.get('data') or {}).get('attributes') or {}
@@ -255,34 +263,82 @@ def _fulfill_paid(data, pay_id=''):
     Mark a transaction paid and fulfill its linked order.
     Idempotent: re-delivered webhooks are no-ops.
     """
+    import logging
     from django.db import transaction as db_transaction
 
+    logger = logging.getLogger(__name__)
+
+    # Unwrap payment object if _parse_event returned full object {id, type, attributes}
+    if isinstance(data, dict) and data.get('type') == 'payment' and 'attributes' in data:
+        if not pay_id and str(data.get('id','')).startswith('pay_'):
+            pay_id = str(data.get('id'))
+        data = data.get('attributes') or {}
+
     reference_number = str(data.get('reference_number') or '')
+    # Fallback: metadata.tx_id (present in both checkout_session and payment payloads)
+    metadata = data.get('metadata') or {}
+    metadata_tx = str(metadata.get('tx_id') or '')
+    # Also check nested payment metadata if top-level empty
+    if not metadata_tx:
+        payments_meta = (data.get('payments') or [])
+        if payments_meta:
+            pm = (payments_meta[-1].get('attributes') or {}).get('metadata') or {}
+            metadata_tx = str(pm.get('tx_id') or '')
+    # Prefer reference_number, else metadata
+    effective_ref = reference_number if reference_number.isdigit() else (metadata_tx if metadata_tx.isdigit() else '')
+
     payments = data.get('payments') or []
     if payments:
         pay_id = pay_id or (payments[-1].get('id') or '')
+    # Also consider top-level payment id for plain payment.paid wrapper
+    if not pay_id and data.get('id', '').startswith('pay_'):
+        pay_id = data.get('id')
+
+    logger.info("webhook fulfill: ref=%s meta=%s pay_id=%s amount=%s", reference_number, metadata_tx, pay_id, _amount_centavos(data))
 
     with db_transaction.atomic():
-        # Idempotency #1: already recorded under this payment id?
+        # Idempotency: if already paid with same pay_id, return. If pending with same pay_id, re-fulfill.
         if pay_id:
             existing = Transaction.objects.filter(
                 provider_payment_id=pay_id
             ).first()
             if existing:
-                return existing
-
-        tx = None
-        if reference_number.isdigit():
-            tx = Transaction.objects.filter(pk=int(reference_number)).first()
-        if tx is None and pay_id:
-            tx = Transaction.objects.filter(provider_checkout_id=pay_id).first()
+                if existing.payment_status == Transaction.PaymentStatus.PAID:
+                    logger.info("webhook idempotent already PAID pay_id=%s tx=%s", pay_id, existing.pk)
+                    return existing
+                # exists but still pending -> treat as tx to fulfill
+                logger.info("webhook idempotent pending pay_id=%s tx=%s will fulfill", pay_id, existing.pk)
+                tx = existing
+            else:
+                tx = None
+        else:
+            tx = None
 
         if tx is None:
+            if effective_ref.isdigit():
+                tx = Transaction.objects.filter(pk=int(effective_ref)).first()
+                if tx:
+                    logger.info("webhook lookup by ref %s -> tx %s", effective_ref, tx.pk)
+            if tx is None and pay_id:
+                tx = Transaction.objects.filter(provider_checkout_id=pay_id).first()
+                if tx:
+                    logger.info("webhook lookup by checkout_id %s -> tx %s", pay_id, tx.pk)
+            # Fallback: lookup by cs_ id in data.id (checkout_session id)
+            if tx is None:
+                cs_id = str(data.get('id') or '')
+                if cs_id.startswith('cs_'):
+                    tx = Transaction.objects.filter(provider_checkout_id=cs_id).first()
+                    if tx:
+                        logger.info("webhook lookup by cs_id %s -> tx %s", cs_id, tx.pk)
+
+        if tx is None:
+            logger.warning("webhook no tx found ref=%s meta=%s pay_id=%s", reference_number, metadata_tx, pay_id)
             return None
 
         # Money check: never fulfill for a mismatched amount.
         paid_amount = _amount_centavos(data)
         if paid_amount is not None and paid_amount != int(tx.amount * 100):
+            logger.warning("webhook amount mismatch tx=%s expected=%s got=%s", tx.pk, int(tx.amount * 100), paid_amount)
             return None
 
         tx.payment_status = Transaction.PaymentStatus.PAID
@@ -292,6 +348,7 @@ def _fulfill_paid(data, pay_id=''):
         if pay_id:
             tx.provider_payment_id = pay_id
         tx.save()
+        logger.info("webhook fulfilled tx=%s booking=%s amount=%s method=%s", tx.pk, getattr(tx.booking, 'pk', None), tx.amount, tx.payment_method)
 
         _fulfill_order(tx)
         return tx
