@@ -17,6 +17,15 @@ from transactions.utils import strip_tx_prefix
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+_TX_TYPE_SHORT = {
+    Transaction.TxType.BOOKING:  'Booking',
+    Transaction.TxType.OPENPLAY: 'Open Play',
+    Transaction.TxType.SALE:     'Sale',
+    Transaction.TxType.RENTAL:   'Rental',
+    Transaction.TxType.MANUAL:   'Manual',
+}
+
+
 def _revenue_queryset():
     """Base queryset — only paid or pending (on-site) transactions count."""
     return Transaction.objects.filter(
@@ -105,25 +114,31 @@ def index(request):
     now   = timezone.now()
 
     # ── Summary Cards ──────────────────────────────────────────────
-    today_revenue = (
-        _revenue_queryset()
-        .filter(created_at__date=today)
+    today_qs = _revenue_queryset().filter(created_at__date=today)
+
+    today_revenue = today_qs.aggregate(total=Sum('amount'))['total'] or 0
+
+    split_bookings = (
+        today_qs
+        .filter(tx_type__in=[
+            Transaction.TxType.BOOKING,
+            Transaction.TxType.OPENPLAY,
+        ])
         .aggregate(total=Sum('amount'))['total'] or 0
     )
 
-    yesterday_revenue = (
-        _revenue_queryset()
-        .filter(created_at__date=today - timedelta(days=1))
+    split_products = (
+        today_qs
+        .filter(tx_type__in=[
+            Transaction.TxType.SALE,
+            Transaction.TxType.RENTAL,
+        ])
         .aggregate(total=Sum('amount'))['total'] or 0
     )
 
-    revenue_delta = None
-    if yesterday_revenue:
-        revenue_delta = round(
-            (float(today_revenue) - float(yesterday_revenue))
-            / float(yesterday_revenue) * 100,
-            1,
-        )
+    last_tx = today_qs.order_by('-created_at').first()
+    last_tx_amount = last_tx.amount if last_tx else None
+    last_tx_label = _TX_TYPE_SHORT.get(last_tx.tx_type) if last_tx else None
 
     month_revenue = (
         _revenue_queryset()
@@ -179,12 +194,14 @@ def index(request):
 
     context = {
         # Cards
-        'today_revenue':     today_revenue,
-        'yesterday_revenue': yesterday_revenue,
-        'revenue_delta':     revenue_delta,
-        'month_revenue':     month_revenue,
-        'bookings_today':    bookings_today,
-        'active_rentals':    active_rentals,
+        'today_revenue':    today_revenue,
+        'split_bookings':   split_bookings,
+        'split_products':   split_products,
+        'last_tx_amount':   last_tx_amount,
+        'last_tx_label':    last_tx_label,
+        'month_revenue':    month_revenue,
+        'bookings_today':   bookings_today,
+        'active_rentals':   active_rentals,
 
         # Charts (passed as Python lists — serialized in template)
         'daily_labels':   daily_labels,

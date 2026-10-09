@@ -217,7 +217,7 @@
 
 /* Primary metric — navy gradient hero */
 .card.kpi-hero {
-  padding: 20px 22px;
+  padding: 22px 24px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -244,14 +244,12 @@
   font-size: 1rem;
 }
 .kpi-hero .kpi-label {
-  font-size: .72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .09em;
+  font-size: .85rem;
+  font-weight: 600;
   color: rgba(255,255,255,.72);
 }
 .kpi-hero .kpi-value {
-  font-size: clamp(1.7rem, 3vw, 2.15rem);
+  font-size: clamp(2.2rem, 4.2vw, 2.9rem);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -.01em;
@@ -261,19 +259,41 @@
   z-index: 1;
 }
 .kpi-hero .kpi-sub {
-  color: rgba(255,255,255,.7);
-  font-size: .8rem;
-  margin-top: 7px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 5px;
+  width: fit-content;
+  margin-top: 10px;
+  padding: .3rem .8rem;
+  border-radius: var(--r-pill);
+  background: rgba(255,255,255,.16);
+  color: #fff;
+  font-size: .82rem;
+  font-weight: 600;
   position: relative;
   z-index: 1;
 }
-.kpi-hero .kpi-delta.up   { background: rgba(74,222,128,.18); color: #4ADE80; }
-.kpi-hero .kpi-delta.down { background: rgba(248,113,113,.18); color: #F87171; }
-.kpi-hero .kpi-delta.flat { background: rgba(255,255,255,.14); color: rgba(255,255,255,.8); }
+.kpi-hero-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.16);
+  position: relative;
+  z-index: 1;
+}
+.kpi-split-label {
+  font-size: .8rem;
+  font-weight: 500;
+  color: rgba(255,255,255,.6);
+}
+.kpi-split-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 3px;
+}
 .kpi-hero-ghost {
   position: absolute;
   right: 16px;
@@ -283,28 +303,25 @@
   color: rgba(255,255,255,.07);
   pointer-events: none;
 }
-.kpi-delta {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: .76rem;
-  font-weight: 700;
-  padding: .15rem .55rem;
-  border-radius: var(--r-pill);
-}
-.kpi-delta.up   { background: var(--ok-soft); color: var(--ok-text); }
-.kpi-delta.down { background: var(--danger-soft); color: var(--danger-text); }
-.kpi-delta.flat { background: var(--slate-soft); color: var(--slate-text); }
 
 /* Stacked secondary metrics — navy accents */
 .card.kpi-row {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 13px 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 18px;
   min-width: 0;
   text-align: left;
-  border-left: 3px solid var(--pt-navy);
+  border-left: 4px solid var(--pt-navy);
+}
+.kpi-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
 }
 .kpi-icon {
   width: 36px;
@@ -319,9 +336,9 @@
   color: var(--pt-navy);
 }
 [data-theme="dark"] .kpi-icon { color: #C7D2E5; }
-.kpi-meta { min-width: 0; flex: 1; }
+.kpi-meta { min-width: 0; width: 100%; flex: 0 1 auto; }
 .kpi-row .kpi-label {
-  font-size: .72rem;
+  font-size: .82rem;
   font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
@@ -329,16 +346,24 @@
   text-overflow: ellipsis;
 }
 .kpi-row .kpi-value {
-  font-size: 1.15rem;
+  font-size: 1.55rem;
   font-weight: 700;
   line-height: 1.25;
   margin-top: 1px;
   color: var(--text);
 }
 .kpi-row .kpi-note {
-  font-size: .7rem;
+  font-size: .75rem;
   color: var(--text-muted);
   margin-top: 1px;
+}
+
+/* Daily revenue range toggle */
+.btn-range .btn { font-size: .8rem; }
+.btn-range .btn.active {
+  background: var(--pt-navy) !important;
+  border-color: var(--pt-navy) !important;
+  color: #fff !important;
 }
 
 @media (max-width: 991.98px) {

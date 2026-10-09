@@ -7,6 +7,9 @@ Chart.defaults.font.size   = 12;
 
 const chartInstances = [];
 
+let dailyRange = 30;
+let dailyChart = null;
+
 function cssVar(name) {
     return getComputedStyle(document.documentElement)
         .getPropertyValue(name)
@@ -46,13 +49,13 @@ function buildCharts() {
     // ── 1. Daily Revenue (line) ───────────────────────────────────────────────
     const dailyEl = document.getElementById('dailyRevenueChart');
     if (dailyEl) {
-        chartInstances.push(new Chart(dailyEl, {
+        dailyChart = new Chart(dailyEl, {
             type: 'line',
             data: {
-                labels: dailyLabels,
+                labels: dailyLabels.slice(-dailyRange),
                 datasets: [{
                     label: 'Revenue (₱)',
-                    data: dailyData,
+                    data: dailyData.slice(-dailyRange),
                     borderColor: p.primary,
                     backgroundColor: p.fill,
                     borderWidth: 2,
@@ -80,7 +83,10 @@ function buildCharts() {
                     }
                 }
             }
-        }));
+        });
+        chartInstances.push(dailyChart);
+    } else {
+        dailyChart = null;
     }
 
     // ── 2. Revenue by Type (doughnut) ─────────────────────────────────────────
@@ -157,3 +163,18 @@ function buildCharts() {
 
 document.addEventListener('pt:themechange', buildCharts);
 buildCharts();
+
+// ── Daily revenue range toggle (7 / 14 / 30 days) ─────────────────────────────
+document.querySelectorAll('.btn-range [data-range]').forEach(btn => {
+    btn.addEventListener('click', () => {
+        dailyRange = Number(btn.dataset.range) || 30;
+        document.querySelectorAll('.btn-range [data-range]')
+            .forEach(b => b.classList.toggle('active', b === btn));
+
+        if (dailyChart) {
+            dailyChart.data.labels = dailyLabels.slice(-dailyRange);
+            dailyChart.data.datasets[0].data = dailyData.slice(-dailyRange);
+            dailyChart.update();
+        }
+    });
+});

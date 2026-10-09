@@ -3,7 +3,7 @@
    Cache-first for static assets, network-first for pages
    ============================================================ */
 
-const CACHE_VERSION  = 'pickleturf-v2';
+const CACHE_VERSION  = 'pickleturf-v3';
 const STATIC_CACHE   = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE  = `${CACHE_VERSION}-dynamic`;
 
@@ -76,7 +76,7 @@ self.addEventListener('fetch', event => {
     if (url.pathname.startsWith('/admin/')) return;
     if (url.pathname.startsWith('/accounts/')) return;
 
-    // ── Static assets: cache-first ─────────────────────────────
+    // ── Static assets: stale-while-revalidate ─────────────────
     if (
         url.pathname.startsWith('/static/') ||
         url.hostname.includes('jsdelivr.net') ||
@@ -84,14 +84,22 @@ self.addEventListener('fetch', event => {
         url.hostname.includes('fonts.gstatic.com')
     ) {
         event.respondWith(
-            caches.match(request).then(cached =>
-                cached || fetch(request).then(response => {
-                    const clone = response.clone();
-                    caches.open(STATIC_CACHE)
-                        .then(cache => cache.put(request, clone));
+            caches.match(request).then(cached => {
+                const refresh = fetch(request).then(response => {
+                    if (response && (response.ok || response.type === 'opaque')) {
+                        const clone = response.clone();
+                        caches.open(STATIC_CACHE)
+                            .then(cache => cache.put(request, clone));
+                    }
                     return response;
-                })
-            )
+                });
+
+                if (cached) {
+                    refresh.catch(() => {});
+                    return cached;
+                }
+                return refresh;
+            })
         );
         return;
     }

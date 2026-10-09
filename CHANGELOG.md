@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-09 — Analytics dashboard & filters
+
+### Added
+- Daily revenue range toggle (7D / 14D / 30D, default 30D) — seamless client-side switching, no reload
+- Hero revenue split (Bookings & Open Play vs Products) with a grey last-transaction pill
+- 3-dot overflow menu in inventory admin header (Categories, Shop view)
+
+### Changed
+- Chart rows reordered: today's bookings + recent transactions, daily revenue + upcoming open play (daily widened), monthly revenue + revenue by type
+- Stat cards: larger values, icon + title on one row, stacked left-aligned layout, 4px navy accent border (lighter navy in dark mode)
+- Search/filter toolbars standardized (38px controls) across bookings, sessions, inventory, rentals, POS, rent POS, shop, transactions, and availability
+- Daily revenue area fill yellow → theme-aware navy; service worker static caching moved to stale-while-revalidate (v3) so style updates reach clients
+
+### Fixed
+- Clear buttons removed from open play admin, POS, and rental POS forms; outline eraser style on the remaining filter rows
+- Availability date field label removed in favor of an icon-only, `aria-label`ed field
+
 ## 2026-10-09 — UI/UX refinement
 
 ### Added

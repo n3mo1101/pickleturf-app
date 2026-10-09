@@ -64,3 +64,13 @@
 
 /* Progress track */
 [data-theme="dark"] .progress { background: var(--border); }
+
+/* Dashboard KPI accent border — navy is invisible on dark surfaces */
+[data-theme="dark"] .card.kpi-row { border-left-color: #5F80BF; }
+
+/* Range toggle active state — same lighter navy on dark surfaces */
+[data-theme="dark"] .btn-range .btn.active {
+  background: #5F80BF !important;
+  border-color: #5F80BF !important;
+  color: #fff !important;
+}
