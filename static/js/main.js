@@ -16,15 +16,33 @@ function toggleTheme() {
     html.setAttribute('data-theme', next);
     localStorage.setItem('pt-theme', next);
     updateThemeBtn(next);
+    document.dispatchEvent(new CustomEvent('pt:themechange', { detail: { theme: next } }));
 }
 
 function updateThemeBtn(theme) {
-    const btn = document.getElementById('themeToggleBtn');
-    if (!btn) return;
     const isDark = theme === 'dark';
-    btn.innerHTML = isDark
-        ? '<i class="bi bi-sun-fill"></i><span>Light Mode</span>'
-        : '<i class="bi bi-moon-fill"></i><span>Dark Mode</span>';
+    const icon   = isDark ? 'bi-sun-fill' : 'bi-moon-fill';
+
+    // Sidebar footer button (icon + label)
+    const sidebarBtn = document.getElementById('themeToggleBtn');
+    if (sidebarBtn) {
+        sidebarBtn.innerHTML =
+            `<i class="bi ${icon} nav-icon"></i>` +
+            `<span>${isDark ? 'Light Mode' : 'Dark Mode'}</span>`;
+    }
+
+    // Mobile topbar button (icon only)
+    const topbarBtn = document.getElementById('topbarThemeBtn');
+    if (topbarBtn) {
+        topbarBtn.innerHTML = `<i class="bi ${icon}"></i>`;
+    }
+
+    // Profile page appearance row (icon + label)
+    const profileBtn = document.getElementById('profileThemeBtn');
+    if (profileBtn) {
+        profileBtn.innerHTML =
+            `<i class="bi ${icon}"></i> ${isDark ? 'Light mode' : 'Dark mode'}`;
+    }
 }
 
 /* ── Sidebar ─────────────────────────────────────────────────── */
@@ -52,24 +70,6 @@ document.addEventListener('click', function (e) {
     const fab = document.getElementById('ptFAB');
     if (fab && !fab.contains(e.target)) {
         fab.classList.remove('open');
-    }
-});
-
-/* ── FAB: avoid overlap with POS sticky bar ─────────────────── */
-document.addEventListener('DOMContentLoaded', function () {
-    const stickyBar = document.querySelector('.pos-sticky-bar');
-    const fab       = document.getElementById('ptFAB');
-
-    if (stickyBar && fab) {
-        // Raise FAB above sticky bar
-        fab.style.bottom = '84px';
-
-        // Also watch for bar becoming visible on resize
-        const observer = new ResizeObserver(() => {
-            const barVisible = window.getComputedStyle(stickyBar).display !== 'none';
-            fab.style.bottom = barVisible ? '84px' : '24px';
-        });
-        observer.observe(stickyBar);
     }
 });
 

@@ -100,7 +100,7 @@ def _create_sale_transaction(sale, created_by=None):
         amount=sale.total,
         sale=sale,
         payment_status=Transaction.PaymentStatus.PAID,
-        description=f'POS Sale – {item_summary}',
+        description=item_summary,
         created_by=created_by,
     )
 
@@ -192,7 +192,7 @@ def _create_rental_transaction_bulk(
         amount=grand_total,
         payment_status=Transaction.PaymentStatus.PAID,
         description=(
-            f'Rental – {item_summary} '
+            f'{item_summary} '
             f'({renter_name})'
         ),
         created_by=handled_by,

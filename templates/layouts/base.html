@@ -54,7 +54,8 @@
                  class="pt-topbar-logo">
             <span class="pt-topbar-name">Pickle<span>Turf</span></span>
         </div>
-        <button class="pt-hamburger" onclick="toggleTheme()">
+        <button class="pt-hamburger" id="topbarThemeBtn" onclick="toggleTheme()"
+                aria-label="Toggle dark mode">
             <i class="bi bi-moon-fill"></i>
         </button>
     </header>
@@ -90,15 +91,22 @@
 {% include 'layouts/confirm_modal.html' %}
 
 {% else %}
-{# Unauthenticated users should not reach base.html — #}
-{# they use base_auth.html or landing.html directly.  #}
-{# This fallback handles any edge cases:              #}
+{# Unauthenticated users should not reach base.html —
+   they use base_auth.html or landing.html directly.
+   This fallback handles edge cases. #}
 <div style="min-height:100vh;background:var(--pt-navy);
             display:flex;align-items:center;
             justify-content:center;padding:20px;">
-    <div style="background:var(--bg-card);border-radius:18px;
-                padding:32px;max-width:440px;width:100%;">
-        "Unauthorized Access: Please log in to continue."
+    <div style="background:var(--bg-card);border-radius:var(--r);
+                padding:32px;max-width:440px;width:100%;
+                text-align:center;">
+        <i class="bi bi-shield-lock" style="font-size:2rem;color:var(--text-muted);"></i>
+        <p style="margin:12px 0 20px;font-weight:600;">
+            Please sign in to continue.
+        </p>
+        <a href="{% url 'account_login' %}" class="btn btn-primary">
+            Sign in
+        </a>
     </div>
 </div>
 {% endif %}

@@ -257,6 +257,51 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// ── Live password rules (shows only failures) ─────────────────
+document.addEventListener('DOMContentLoaded', function () {
+    const p1 = document.getElementById('id_password1');
+    if (!p1) return;
+    const p2 = document.getElementById('id_password2');
+
+    const host = p1.closest('.mb-3') || p1.parentElement;
+    const ul = document.createElement('ul');
+    ul.className = 'pw-rules';
+    host.parentNode.insertBefore(ul, host.nextSibling);
+
+    function failingRules(password, confirm) {
+        const rules = [];
+        if (password.length > 0) {
+            if (password.length < 8) {
+                rules.push('At least 8 characters');
+            }
+            if (/^\d+$/.test(password)) {
+                rules.push("Can't be only numbers");
+            }
+            if (confirm && confirm.length > 0 && password !== confirm) {
+                rules.push('Both passwords match');
+            }
+        }
+        return rules;
+    }
+
+    function update() {
+        const fails = failingRules(
+            p1.value,
+            p2 ? p2.value : ''
+        );
+        ul.innerHTML = '';
+        fails.forEach(msg => {
+            const li = document.createElement('li');
+            li.textContent = msg;
+            ul.appendChild(li);
+        });
+    }
+
+    p1.addEventListener('input', update);
+    if (p2) p2.addEventListener('input', update);
+    update();
+});
 </script>
 
 {# PWA Service Worker Registration #}

@@ -1,51 +1,46 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
 {% load crispy_forms_tags %}
-{% block title %}Rental POS{% endblock %}
+{% block title %}Rent equipment{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-clock-history"></i> Rent Equipment</h4>
-    <div class="d-flex gap-2">
+<header class="pt-page-header">
+    <div>
+        <h1 class="pt-page-title">Rent equipment</h1>
+        <p class="pt-page-subtitle">Check out gear to customers</p>
+    </div>
+    <div class="pt-page-actions d-flex gap-2">
         <a href="{% url 'inventory:admin_pos' %}"
-           class="btn btn-outline-secondary btn-sm">
+           class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-cart3"></i> Purchase
         </a>
         <a href="{% url 'inventory:admin_rental_list' %}"
-        class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-list-ul"></i> Active Rentals
+           class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-list-ul"></i> Active rentals
         </a>
     </div>
-</div>
+</header>
 
 {# Search / Filter #}
-<form method="get" class="row g-2 mb-3">
-    <div class="col-md-4">
-        <input type="text" name="q"
-               class="form-control form-control-sm"
-               placeholder="Search items..."
-               value="{{ search_query }}">
-    </div>
-    <div class="col-md-3">
-        <select name="category" class="form-select form-select-sm">
-            <option value="">All Categories</option>
-            {% for cat in categories %}
-            <option value="{{ cat.id }}"
-                {% if category_filter == cat.id|stringformat:"s" %}
-                    selected
-                {% endif %}>
-                {{ cat.name }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-search"></i> Filter
-        </button>
-        <a href="{% url 'inventory:admin_rental_pos' %}"
-           class="btn btn-sm btn-link">Clear</a>
-    </div>
+<form method="get" class="pt-filters">
+    <input type="search" name="q"
+           class="form-control"
+           placeholder="Search items..."
+           value="{{ search_query }}">
+    <select name="category" class="form-select">
+        <option value="">All categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}"
+            {% if category_filter == cat.id|stringformat:"s" %}
+                selected
+            {% endif %}>
+            {{ cat.name }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-search"></i> Filter
+    </button>
 </form>
 
 <div class="pos-page-wrap">
@@ -79,7 +74,7 @@
                                 <div class="fw-semibold small">
                                     {{ item.name }}
                                 </div>
-                                <div class="text-warning small fw-bold">
+                                <div class="text-success small fw-bold">
                                     ₱{{ item.rent_price }}
                                 </div>
                                 <div class="text-muted"
@@ -123,8 +118,8 @@
             <div class="col-lg-4">
                 <div class="card border-0 shadow-sm sticky-top"
                     style="top:70px;">
-                    <div class="card-header bg-dark text-white">
-                        <i class="bi bi-receipt"></i> Rental Summary
+                    <div class="card-header fw-semibold">
+                        Rental summary
                     </div>
 
                     <div class="card-body p-0">
@@ -145,7 +140,7 @@
                         <div class="d-flex justify-content-between
                                     fw-bold fs-5 mb-3">
                             <span>Total</span>
-                            <span class="text-warning">
+                            <span class="text-success">
                                 ₱<span id="grand-total">0.00</span>
                             </span>
                         </div>
@@ -170,12 +165,11 @@
                         </div>
 
                         <button type="submit"
-                                class="btn btn-warning w-100 btn-lg
-                                    text-dark fw-bold"
+                                class="btn btn-primary w-100 btn-lg"
                                 id="checkout-btn"
                                 disabled>
                             <i class="bi bi-check-circle"></i>
-                            Process Rental
+                            Process rental
                         </button>
                     </div>
                 </div>
@@ -187,13 +181,13 @@
     {# Mobile sticky bar #}
     <div class="pos-sticky-bar" id="rentalStickyBar">
         <div class="pos-sticky-total">
-            <span class="pos-sticky-label">Rental Total</span>
+            <span class="pos-sticky-label">Rental total</span>
             <span class="pos-sticky-amount">
                 ₱<span id="rentalStickyTotal">0.00</span>
             </span>
         </div>
         <button type="submit" form="rental-form"
-                class="btn btn-warning fw-bold pos-sticky-btn"
+                class="btn btn-primary pos-sticky-btn"
                 id="rentalStickyBtn" disabled>
             <i class="bi bi-check-circle me-1"></i>
             Process

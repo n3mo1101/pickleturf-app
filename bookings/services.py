@@ -25,7 +25,8 @@ def get_time_slots():
 
 def get_availability(selected_date):
     """
-    Returns dict: { time_slot: { court_id: 'available'|'booked' } }
+    Returns dict: { time_slot: { 'courts': {...}, 'price': ..., 'past': bool } }
+    with per-court status 'available' | 'booked' | 'past'.
     Used to render the booking grid.
     """
     from datetime import datetime, timedelta
@@ -42,15 +43,20 @@ def get_availability(selected_date):
     grid = {}
     for slot_time, slot_label in slots:
         slot_price = get_price_for_display(slot_time)
+        slot_past  = is_past_slot(selected_date, slot_time)
         grid[slot_label] = {
             'courts': {},
-            'price':   slot_price,
+            'price':  slot_price,
+            'past':   slot_past,
         }
         for court in courts:
-            is_booked = (court.id, slot_time) in booked_set
-            grid[slot_label]['courts'][court] = (
-                'booked' if is_booked else 'available'
-            )
+            if slot_past:
+                status = 'past'
+            elif (court.id, slot_time) in booked_set:
+                status = 'booked'
+            else:
+                status = 'available'
+            grid[slot_label]['courts'][court] = status
 
     return grid
 
@@ -132,7 +138,7 @@ def _create_booking_transaction(booking, provider='onsite'):
         booking=booking,
         payment_status=Transaction.PaymentStatus.PENDING,
         provider=provider_value,
-        description=f'Court booking – {booking.court} on {booking.date} at {booking.start_time}',
+        description=f'{booking.court} on {booking.date} at {booking.start_time}',
         created_by=booking.created_by,
     )
 
