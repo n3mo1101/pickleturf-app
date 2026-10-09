@@ -1,8 +1,8 @@
 {% extends 'accounts/base_auth.html' %}
 {% load crispy_forms_tags %}
 
-{% block auth_title %}Account Connections — PickleTurf{% endblock %}
-{% block card_title %}Social Connections{% endblock %}
+{% block auth_title %}Account connections{% endblock %}
+{% block card_title %}Social connections{% endblock %}
 {% block card_subtitle %}Manage your connected accounts{% endblock %}
 
 {% block auth_content %}
@@ -28,7 +28,7 @@
         </div>
         <form method="post" action="{% url 'socialaccount_disconnect' %}"
               data-pt-confirm
-              data-pt-confirm-title="Disconnect Account"
+              data-pt-confirm-title="Disconnect account"
               data-pt-confirm-body="Disconnect your {{ account.get_provider.name }} account? You can reconnect it later."
               data-pt-confirm-label="Disconnect"
               data-pt-confirm-class="btn-danger">
@@ -64,7 +64,7 @@
 <div class="mt-3 text-center">
     <a href="{% url 'accounts:profile' %}"
        class="btn btn-outline-secondary btn-sm">
-        ← Back to Profile
+        <i class="bi bi-arrow-left"></i> Back to profile
     </a>
 </div>
 {% endblock %}

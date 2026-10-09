@@ -1,36 +1,38 @@
 {% extends 'layouts/base.html' %}
-{% block title %}Manage Open Play{% endblock %}
+{% block title %}Open play{% endblock %}
 {% load dict_filters %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4><i class="bi bi-people-fill"></i> Open Play </h4>
-    <a href="{% url 'openplay:admin_create' %}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> New Session
-    </a>
-</div>
+<header class="pt-page-header">
+    <div>
+        <h1 class="pt-page-title">Open play</h1>
+        <p class="pt-page-subtitle">Manage sessions and player requests</p>
+    </div>
+    <div class="pt-page-actions">
+        <a href="{% url 'openplay:admin_create' %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg"></i> New session
+        </a>
+    </div>
+</header>
 
-{# Filter #}
-<form method="get" class="row g-2 mb-4">
-    <div class="col-md-3">
-        <select name="status" class="form-select form-select-sm">
-            <option value="">All Statuses</option>
-            {% for val, label in status_choices %}
-            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>
-                {{ label }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
-        <a href="{% url 'openplay:admin_list' %}" class="btn btn-sm btn-link">Clear</a>
-    </div>
+{# ── Filter ── #}
+<form method="get" class="pt-filters">
+    <select name="status" class="form-select">
+        <option value="">All statuses</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>
+            {{ label }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-funnel"></i> Filter
+    </button>
 </form>
 
 <div class="table-responsive">
     <table class="table table-hover align-middle table-card-mobile">
-        <thead class="table-dark">
+        <thead>
             <tr>
                 <th>Title</th>
                 <th>Date</th>
@@ -39,7 +41,7 @@
                 <th>Fee</th>
                 <th>Status</th>
                 <th>Requests</th>
-                <th>Actions</th>
+                <th class="th-actions"><span class="visually-hidden">Actions</span></th>
             </tr>
         </thead>
         <tbody>
@@ -54,15 +56,15 @@
                     {{ s.spots_remaining }} / {{ s.capacity }}
                     <div class="progress mt-1" style="height:4px;">
                         {% widthratio s.participants.count s.capacity 100 as pct %}
-                        <div class="progress-bar bg-success" style="width:{{ pct }}%"></div>
+                        <div class="progress-bar" style="width:{{ pct }}%"></div>
                     </div>
                 </td>
-                <td data-label="Fee">{% if s.fee > 0 %}₱{{ s.fee }}{% else %}Free{% endif %}</td>
+                <td data-label="Fee">{% if s.fee > 0 %}₱{{ s.fee|floatformat:2 }}{% else %}Free{% endif %}</td>
                 <td data-label="Status">
                     {% if s.status == 'open' %}
                         <span class="badge bg-success">Open</span>
                     {% elif s.status == 'full' %}
-                        <span class="badge bg-warning text-dark">Full</span>
+                        <span class="badge bg-warning">Full</span>
                     {% elif s.status == 'completed' %}
                         <span class="badge bg-secondary">Completed</span>
                     {% else %}
@@ -71,7 +73,7 @@
                 </td>
                 <td data-label="Requests">
                     {% if s.pending_count > 0 %}
-                    <span class="badge bg-warning text-dark">
+                    <span class="badge bg-warning">
                         <i class="bi bi-hourglass-split me-1"></i>
                         {{ s.pending_count }}
                     </span>
@@ -79,25 +81,40 @@
                     <span class="text-muted small">—</span>
                     {% endif %}
                 </td>
-                <td data-label="Actions" class="td-actions">
-                    <div class="d-flex gap-1">
-                        <a href="{% url 'openplay:admin_detail' s.pk %}"
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-people"></i> Manage
-                        </a>
-                        <a href="{% url 'openplay:admin_edit' s.pk %}"
-                           class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-pencil"></i>
-                        </a>
+                <td class="td-actions">
+                    <div class="dropdown">
+                        <button class="btn btn-icon" type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                aria-label="Actions for {{ s.title }}">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'openplay:admin_detail' s.pk %}">
+                                    <i class="bi bi-people"></i> Manage
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'openplay:admin_edit' s.pk %}">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </li>
+                        </ul>
                     </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-state">
+                <td colspan="8">
+                    <i class="bi bi-people"></i>
+                    No sessions found.
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
-
-{% if not sessions %}
-<div class="text-center text-muted py-4">No sessions found.</div>
-{% endif %}
 {% endblock %}

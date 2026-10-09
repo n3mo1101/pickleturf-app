@@ -160,7 +160,7 @@ def _create_openplay_transaction(participant, provider=None):
         openplay=participant,
         provider=provider or Transaction.Provider.ONSITE,
         description=(
-            f'Open play – {participant.session.title} '
+            f'{participant.session.title} '
             f'on {participant.session.date}'
         ),
     )

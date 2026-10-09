@@ -1,14 +1,12 @@
 {% extends 'layouts/base.html' %}
 {% load crispy_forms_tags %}
-{% block title %}Adjust Stock – {{ item.name }}{% endblock %}
+{% block title %}Adjust stock{% endblock %}
 {% block content %}
 <div class="row justify-content-center mt-4">
     <div class="col-md-5">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">
-                    <i class="bi bi-boxes"></i> Adjust Stock – {{ item.name }}
-                </h5>
+            <div class="card-header fw-semibold">
+                Adjust stock · {{ item.name }}
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
@@ -18,8 +16,8 @@
                     {% csrf_token %}
                     {{ form|crispy }}
                     <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-warning">
-                            <i class="bi bi-check-circle"></i> Apply Adjustment
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Apply adjustment
                         </button>
                         <a href="{% url 'inventory:admin_detail' item.pk %}"
                            class="btn btn-outline-secondary">Cancel</a>

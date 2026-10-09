@@ -2,8 +2,8 @@
 {% load i18n %}
 {% load crispy_forms_tags %}
 
-{% block auth_title %}Social Sign In — PickleTurf{% endblock %}
-{% block card_title %}Complete Sign In{% endblock %}
+{% block auth_title %}Complete sign in{% endblock %}
+{% block card_title %}Complete sign in{% endblock %}
 {% block card_subtitle %}You're signing in via {{ sociallogin.account.get_provider.name }}{% endblock %}
 
 {% block auth_content %}
@@ -29,7 +29,7 @@
         {{ form|crispy }}
     {% endif %}
     <div class="d-grid gap-2">
-        <button type="submit" class="btn btn-success btn-lg fw-bold">
+        <button type="submit" class="btn btn-primary btn-lg fw-bold">
             <i class="bi bi-box-arrow-in-right me-2"></i>Continue
         </button>
         <a href="{% url 'account_login' %}"

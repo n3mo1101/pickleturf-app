@@ -1,8 +1,8 @@
 {% extends 'accounts/base_auth.html' %}
 {% load crispy_forms_tags socialaccount %}
 
-{% block auth_title %}Create Account — PickleTurf{% endblock %}
-{% block card_title %}Create Account{% endblock %}
+{% block auth_title %}Create account{% endblock %}
+{% block card_title %}Create account{% endblock %}
 {% block card_subtitle %}Join PickleTurf today{% endblock %}
 
 {% block auth_content %}
@@ -10,8 +10,8 @@
     {% csrf_token %}
     {{ form|crispy }}
     <div class="d-grid mt-3">
-        <button class="btn btn-success btn-lg fw-bold" type="submit">
-            <i class="bi bi-person-plus-fill me-2"></i>Create Account
+        <button class="btn btn-primary btn-lg fw-bold" type="submit">
+            <i class="bi bi-person-plus-fill me-2"></i>Create account
         </button>
     </div>
 </form>
@@ -32,7 +32,7 @@
 <p class="text-center mt-4 mb-0 small text-muted">
     Already have an account?
     <a href="{% url 'account_login' %}" class="fw-semibold text-navy">
-        Sign In
+        Sign in
     </a>
 </p>
 {% endblock %}

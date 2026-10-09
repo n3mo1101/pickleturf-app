@@ -36,7 +36,7 @@
             }
         }
         return {
-            title:        dataset.ptConfirmTitle || 'Confirm',
+            title:        dataset.ptConfirmTitle || 'Are you sure?',
             body:         dataset.ptConfirmBody  || '',
             details:      details,
             confirmLabel: dataset.ptConfirmLabel || 'Confirm',
@@ -45,7 +45,7 @@
     }
 
     function openConfirm(options) {
-        titleEl.textContent = options.title || 'Confirm';
+        titleEl.textContent = options.title || 'Are you sure?';
         bodyEl.textContent  = options.body  || '';
         detailsEl.innerHTML = '';
 

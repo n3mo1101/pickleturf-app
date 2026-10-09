@@ -9,10 +9,8 @@
 
         {# ── Edit/Create Form ── #}
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0 text-white">
-                    <i class="bi bi-megaphone"></i> {{ title }}
-                </h5>
+            <div class="card-header fw-semibold">
+                {{ title }}
             </div>
             <div class="card-body p-4">
 
@@ -28,12 +26,12 @@
                     {% csrf_token %}
                     {{ form|crispy }}
                     <div class="d-grid gap-2 mt-3">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check-circle"></i>
                             {% if announcement %}
-                                Save Changes
+                                Save changes
                             {% else %}
-                                Publish Announcement
+                                Publish announcement
                             {% endif %}
                         </button>
                         <a href="{% url 'announcements:admin_list' %}"
@@ -50,7 +48,7 @@
                     action="{% url 'announcements:admin_delete' announcement.pk %}"
                     id="deleteForm"
                     data-pt-confirm
-                    data-pt-confirm-title="Delete Announcement"
+                    data-pt-confirm-title="Delete announcement"
                     data-pt-confirm-body="Permanently delete &quot;{{ announcement.title|escapejs }}&quot;? This cannot be undone."
                     data-pt-confirm-label="Delete"
                     data-pt-confirm-class="btn-danger">
@@ -86,7 +84,7 @@
             previewBox.style.display = '';
             previewBox.className = `alert alert-${l} mb-3`;
             previewTitle.textContent = t;
-            previewBody.textContent  = b ? ` — ${b}` : '';
+            previewBody.textContent  = b ? ` · ${b}` : '';
         } else {
             previewBox.style.display = 'none';
         }

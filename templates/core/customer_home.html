@@ -5,7 +5,7 @@
 
 {# ── Greeting Banner ── #}
 <div class="pt-greeting mb-4 fade-in-up">
-    <h3>Hey, {{ user.first_name }}! 👋</h3>
+    <h3>Hey, {{ user.first_name }}!</h3>
     <p>
         {% if upcoming_bookings %}
             You have {{ upcoming_bookings|length }} upcoming booking(s).
@@ -16,8 +16,8 @@
     </p>
     <div class="d-flex gap-2 mt-3 flex-wrap">
         <a href="{% url 'bookings:create' %}"
-           class="btn btn-warning btn-sm fw-bold">
-            <i class="bi bi-calendar-plus me-1"></i> Book a Court
+           class="btn btn-accent btn-sm fw-bold">
+            <i class="bi bi-calendar-plus me-1"></i> Book a court
         </a>
         <a href="{% url 'openplay:list' %}"
            class="btn btn-outline-secondary btn-sm"
@@ -30,8 +30,7 @@
 {# ── Announcements List ── #}
 {% if announcements %}
 <div class="mt-4 fade-in-up">
-    <h5 class="fw-bold mb-3">
-        <i class="bi bi-megaphone-fill text-warning me-2"></i>
+    <h5 class="fw-semibold mb-3">
         Announcements
     </h5>
     <div class="d-flex flex-column gap-2">
@@ -57,14 +56,13 @@
     {# ── Upcoming Bookings ── #}
     <div class="col-lg-6 fade-in-up">
         <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span>
-                    <i class="bi bi-calendar-check text-warning me-2"></i>
-                    Upcoming Bookings
+                    Upcoming bookings
                 </span>
                 <a href="{% url 'bookings:my_bookings' %}"
                    class="btn btn-sm btn-outline-secondary">
-                    View All
+                    View all
                 </a>
             </div>
             <div class="card-body p-0">
@@ -89,7 +87,7 @@
                             {% if b.status == 'confirmed' %}
                             <span class="badge bg-success">Confirmed</span>
                             {% elif b.status == 'pending' %}
-                            <span class="badge bg-warning text-dark">
+                            <span class="badge bg-warning">
                                 Pending
                             </span>
                             {% endif %}
@@ -102,8 +100,8 @@
                     <i class="bi bi-calendar-x" style="font-size:2.5rem;"></i>
                     <p class="mt-2 mb-3 small">No upcoming bookings.</p>
                     <a href="{% url 'bookings:create' %}"
-                       class="btn btn-success btn-sm">
-                        Book a Court
+                       class="btn btn-primary btn-sm">
+                        Book a court
                     </a>
                 </div>
                 {% endif %}
@@ -117,14 +115,13 @@
 
             {# Today's Open Play #}
             <div class="card fade-in-up">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                     <span>
-                        <i class="bi bi-people-fill text-warning me-2"></i>
-                        Today's Open Play
+                        Today's open play
                     </span>
                     <a href="{% url 'openplay:list' %}"
                        class="btn btn-sm btn-outline-secondary">
-                        All Sessions
+                        All sessions
                     </a>
                 </div>
                 <div class="card-body p-0">
@@ -147,7 +144,7 @@
                                     left
                                 </div>
                                 {% if s.status == 'full' %}
-                                <span class="badge bg-warning text-dark">
+                                <span class="badge bg-warning">
                                     Full
                                 </span>
                                 {% else %}
@@ -173,9 +170,8 @@
 
             {# Quick Links #}
             <div class="card fade-in-up">
-                <div class="card-header">
-                    <i class="bi bi-lightning-charge text-warning me-2"></i>
-                    Quick Actions
+                <div class="card-header fw-semibold">
+                    Quick actions
                 </div>
                 <div class="card-body">
                     <div class="row g-2">
@@ -183,21 +179,21 @@
                             <a href="{% url 'bookings:availability' %}"
                                class="btn btn-outline-secondary w-100 text-start">
                                 <i class="bi bi-grid-3x3-gap me-2 text-navy"></i>
-                                View Availability
+                                View availability
                             </a>
                         </div>
                         <div class="col-6">
                             <a href="{% url 'bookings:my_bookings' %}"
                                class="btn btn-outline-secondary w-100 text-start">
                                 <i class="bi bi-journal-check me-2 text-navy"></i>
-                                My Bookings
+                                My bookings
                             </a>
                         </div>
                         <div class="col-6">
                             <a href="{% url 'openplay:list' %}"
                                class="btn btn-outline-secondary w-100 text-start">
                                 <i class="bi bi-people me-2 text-navy"></i>
-                                Open Play
+                                Open play
                             </a>
                         </div>
                         <div class="col-6">

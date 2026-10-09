@@ -17,3 +17,9 @@ def get_slot_price(time_str):
         return get_price_for_display(t)
     except Exception:
         return 0
+
+@register.filter
+def tx_desc(description):
+    """Strip the legacy type prefix from a transaction description."""
+    from transactions.utils import strip_tx_prefix
+    return strip_tx_prefix(description)

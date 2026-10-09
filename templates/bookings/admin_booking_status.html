@@ -1,12 +1,12 @@
 {% extends 'layouts/base.html' %}
-{% block title %}Update Booking Status{% endblock %}
+{% block title %}Update booking status{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mt-4">
     <div class="col-md-5">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0 text-white">Update Booking #{{ booking.id }}</h5>
+            <div class="card-header fw-semibold">
+                Update booking #{{ booking.id }}
             </div>
             <div class="card-body">
                 <ul class="list-group list-group-flush mb-3">
@@ -32,7 +32,7 @@
                         </select>
                     </div>
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary flex-fill">Update Status</button>
+                        <button type="submit" class="btn btn-primary flex-fill">Update status</button>
                         <a href="{% url 'bookings:admin_list' %}" class="btn btn-outline-secondary flex-fill">Cancel</a>
                     </div>
                 </form>

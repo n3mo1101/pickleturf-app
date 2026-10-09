@@ -59,11 +59,11 @@
             </a>
             <a href="{% url 'bookings:staff_bookings' %}"
                class="pt-submenu-link {% if 'staff-bookings' in request.path %}active{% endif %}">
-                Staff Bookings
+                 Staff bookings
             </a>
             <a href="{% url 'bookings:admin_list' %}"
                class="pt-submenu-link {% if 'admin' in request.path and '/bookings/' in request.path %}active{% endif %}">
-                All Bookings
+                 All bookings
             </a>
         </div>
 
@@ -71,14 +71,14 @@
         <a href="{% url 'openplay:admin_list' %}"
            class="pt-nav-link {% if '/openplay/' in request.path %}active{% endif %}">
             <i class="bi bi-people-fill nav-icon"></i>
-            <span>Open Play</span>
+            <span>Open play</span>
         </a>
 
         {# Shop (dropdown) #}
-        <a class="pt-nav-link {% if '/inventory/' in request.path and 'pos' in request.path or 'rentals' in request.path or 'shop' in request.path %}parent-active{% endif %}"
+        <a class="pt-nav-link {% if '/inventory/' in request.path and 'pos' in request.path or '/inventory/' in request.path and 'rentals' in request.path %}parent-active{% endif %}"
            data-bs-toggle="collapse"
            data-bs-target="#sb-shop"
-           aria-expanded="{% if '/inventory/' in request.path %}true{% else %}false{% endif %}">
+           aria-expanded="{% if '/inventory/' in request.path and 'pos' in request.path or '/inventory/' in request.path and 'rentals' in request.path %}true{% else %}false{% endif %}">
             <i class="bi bi-shop nav-icon"></i>
             <span>Shop</span>
             <i class="bi bi-chevron-down pt-chevron"></i>
@@ -136,7 +136,7 @@
             </a>
             <a href="{% url 'bookings:my_bookings' %}"
                class="pt-submenu-link {% if 'my' in request.path %}active{% endif %}">
-                My Bookings
+                 My bookings
             </a>
         </div>
 
@@ -144,7 +144,7 @@
         <a href="{% url 'openplay:list' %}"
            class="pt-nav-link {% if '/openplay/' in request.path %}active{% endif %}">
             <i class="bi bi-people-fill nav-icon"></i>
-            <span>Open Play</span>
+            <span>Open play</span>
         </a>
 
         {# Shop #}
@@ -172,29 +172,27 @@
         <button class="pt-nav-link" onclick="toggleTheme()"
                 id="themeToggleBtn">
             <i class="bi bi-moon-fill nav-icon"></i>
-            <span>Dark Mode</span>
+            <span>Dark mode</span>
         </button>
 
         {# Logout #}
         <a href="{% url 'account_logout' %}"
-           class="pt-nav-link"
-           style="color: rgba(255,100,100,.8);"
+           class="pt-nav-link pt-nav-link--danger"
            data-pt-confirm
-           data-pt-confirm-title="Sign Out"
-           data-pt-confirm-body="Sign out of PickleTurf?"
-           data-pt-confirm-label="Sign Out"
+           data-pt-confirm-title="Sign out"
+           data-pt-confirm-body="You'll need to sign in again to continue."
+           data-pt-confirm-label="Sign out"
            data-pt-confirm-class="btn-danger">
             <i class="bi bi-box-arrow-left nav-icon"></i>
-            <span>Sign Out</span>
+            <span>Sign out</span>
         </a>
 
         {# PWA Install Button — only visible when installable #}
         <button class="pt-nav-link"
                 id="pwaInstallBtn"
-                onclick="installPWA()"
-                style="display:none; color: var(--pt-yellow);">
+                onclick="installPWA()">
             <i class="bi bi-download nav-icon"></i>
-            <span>Install App</span>
+            <span>Install app</span>
         </button>
     </div>
 

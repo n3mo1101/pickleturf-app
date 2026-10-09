@@ -4,7 +4,7 @@
 {% block content %}
 <div class="mb-3">
     <a href="{% url 'inventory:admin_list' %}" class="text-muted small">
-        ← Inventory
+        <i class="bi bi-arrow-left"></i> Inventory
     </a>
 </div>
 
@@ -62,14 +62,13 @@
         {# Active Rentals #}
         {% if active_rentals %}
         <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-warning text-dark">
-                <i class="bi bi-clock-history"></i>
-                Active Rentals
-                <span class="badge bg-dark ms-1">{{ active_rentals|length }}</span>
+            <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+                Active rentals
+                <span class="badge bg-primary">{{ active_rentals|length }}</span>
             </div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0 table-card-mobile">
-                    <thead class="table-light">
+                    <thead>
                         <tr><th>Customer</th><th>Rented At</th><th>Qty</th><th>Cost</th><th></th></tr>
                     </thead>
                     <tbody>
@@ -84,10 +83,10 @@
                                       action="{% url 'inventory:admin_return' r.pk %}"
                                       class="d-inline"
                                       data-pt-confirm
-                                      data-pt-confirm-title="Return Rental"
+                                      data-pt-confirm-title="Return rental"
                                       data-pt-confirm-body="Confirm this rental has been returned? Stock will be restored."
-                                      data-pt-confirm-label="Confirm Return"
-                                      data-pt-confirm-class="btn-success"
+                                      data-pt-confirm-label="Confirm return"
+                                      data-pt-confirm-class="btn-primary"
                                       data-pt-confirm-details='[
                                           {"label":"Item","value":"{{ item.name|escapejs }}"},
                                           {"label":"Quantity","value":"{{ r.quantity }}"},
@@ -96,7 +95,7 @@
                                           {"label":"Total Cost","value":"₱{{ r.total_cost }}"}
                                       ]'>
                                     {% csrf_token %}
-                                    <button class="btn btn-xs btn-success btn-sm">
+                                    <button class="btn btn-sm btn-primary">
                                         Return
                                     </button>
                                 </form>
@@ -111,12 +110,12 @@
 
         {# Recent Rental History #}
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light">
-                <i class="bi bi-clock-history"></i> Recent Rental History
+            <div class="card-header fw-semibold">
+                Recent rental history
             </div>
             <div class="table-responsive">
                 <table class="table table-sm mb-0 table-card-mobile">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>Customer</th><th>Rented</th>
                             <th>Returned</th><th>Cost</th><th>Status</th>
@@ -133,7 +132,7 @@
                             <td>₱{{ r.total_cost }}</td>
                             <td>
                                 {% if r.status == 'active' %}
-                                <span class="badge bg-warning text-dark">Active</span>
+                                <span class="badge bg-warning">Active</span>
                                 {% elif r.status == 'returned' %}
                                 <span class="badge bg-success">Returned</span>
                                 {% else %}

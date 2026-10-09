@@ -1,80 +1,91 @@
 {% extends 'layouts/base.html' %}
-{% block title %}Inventory Management{% endblock %}
+{% block title %}Inventory{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<header class="pt-page-header">
     <div>
-        <h4 class="mb-0"><i class="bi bi-boxes"></i> Inventory</h4>
-        {% if low_stock_count > 0 %}
-        <span class="badge bg-warning text-dark">
-            <i class="bi bi-exclamation-triangle"></i>
-            {{ low_stock_count }} item(s) low on stock
-        </span>
-        {% endif %}
+        <h1 class="pt-page-title">Inventory</h1>
+        <p class="pt-page-subtitle">
+            {% if low_stock_count > 0 %}
+            <span class="badge bg-warning">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                {{ low_stock_count }} low on stock
+            </span>
+            {% else %}
+            Manage items for sale and rent
+            {% endif %}
+        </p>
     </div>
-    <div class="d-flex gap-2">
-        <a href="{% url 'inventory:admin_categories' %}"
-           class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-tags"></i> Categories
-        </a>
-        <a href="{% url 'inventory:shop' %}"
-           class="btn btn-outline-warning btn-sm">
-            <i class="bi bi-shop"></i> <span>Shop</span> View
-        </a>
+    <div class="pt-page-actions">
         <a href="{% url 'inventory:admin_create' %}"
-           class="btn btn-success btn-sm">
-            <i class="bi bi-plus-circle"></i> Add Item
+           class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-lg"></i> Add item
         </a>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary btn-icon-outline"
+                    data-bs-toggle="dropdown"
+                    aria-label="More options"
+                    aria-expanded="false">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="{% url 'inventory:admin_categories' %}">
+                        <i class="bi bi-tags"></i> Categories
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{% url 'inventory:shop' %}">
+                        <i class="bi bi-shop"></i> Shop view
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-</div>
+</header>
 
-{# Filters #}
-<form method="get" class="row g-2 mb-4">
-    <div class="col-md-3">
-        <input type="text" name="q" class="form-control form-control-sm"
-               placeholder="Search..." value="{{ search_query }}">
-    </div>
-    <div class="col-md-2">
-        <select name="category" class="form-select form-select-sm">
-            <option value="">All Categories</option>
-            {% for cat in categories %}
-            <option value="{{ cat.id }}"
-                {% if category_filter == cat.id|stringformat:"s" %}selected{% endif %}>
-                {{ cat.name }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select name="type" class="form-select form-select-sm">
-            <option value="">All Types</option>
-            {% for val, label in type_choices %}
-            <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>
-                {{ label }}
-            </option>
-            {% endfor %}
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select name="stock" class="form-select form-select-sm">
-            <option value="">All Stock</option>
-            <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>
-                Low (≤5)
-            </option>
-            <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>
-                Out of Stock
-            </option>
-        </select>
-    </div>
-    <div class="col-auto">
-        <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
-        <a href="{% url 'inventory:admin_list' %}" class="btn btn-sm btn-link">Clear</a>
-    </div>
+{# ── Filters ── #}
+<form method="get" class="pt-filters">
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-funnel"></i> Filter
+    </button>
+    <input type="search" name="q" class="form-control"
+           placeholder="Search items..." value="{{ search_query }}">
+
+    <select name="category" class="form-select">
+        <option value="">All categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat.id }}"
+            {% if category_filter == cat.id|stringformat:"s" %}selected{% endif %}>
+            {{ cat.name }}
+        </option>
+        {% endfor %}
+    </select>
+    <select name="type" class="form-select">
+        <option value="">All types</option>
+        {% for val, label in type_choices %}
+        <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>
+            {{ label }}
+        </option>
+        {% endfor %}
+    </select>
+    <select name="stock" class="form-select">
+        <option value="">All stock</option>
+        <option value="low" {% if stock_filter == 'low' %}selected{% endif %}>
+            Low (&le;5)
+        </option>
+        <option value="out" {% if stock_filter == 'out' %}selected{% endif %}>
+            Out of stock
+        </option>
+    </select>
+    <a href="{% url 'inventory:admin_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-eraser"></i> Clear
+    </a>
 </form>
 
 <div class="table-responsive">
     <table class="table table-hover align-middle table-card-mobile">
-        <thead class="table-dark">
+        <thead>
             <tr>
                 <th>Item</th>
                 <th>Category</th>
@@ -83,7 +94,7 @@
                 <th>Rent Price</th>
                 <th>Stock</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th class="th-actions"><span class="visually-hidden">Actions</span></th>
             </tr>
         </thead>
         <tbody>
@@ -94,9 +105,9 @@
                     <div class="d-flex align-items-center gap-2">
                         {% if item.image %}
                         <img src="{{ item.image.url }}" width="36" height="36"
-                             class="rounded" style="object-fit:cover;">
+                             class="rounded" style="object-fit:cover;" alt="">
                         {% else %}
-                        <div class="bg-secondary rounded d-flex align-items-center
+                        <div class="bg-navy rounded d-flex align-items-center
                                     justify-content-center text-white"
                              style="width:36px;height:36px;font-size:.8rem;">
                             <i class="bi bi-box-seam"></i>
@@ -109,7 +120,7 @@
                 <td data-label="Type">
                     <span class="badge
                         {% if item.item_type == 'sale' %}bg-primary
-                        {% elif item.item_type == 'rent' %}bg-warning text-dark
+                        {% elif item.item_type == 'rent' %}bg-warning
                         {% else %}bg-success{% endif %}">
                         {{ item.get_item_type_display }}
                     </span>
@@ -119,7 +130,7 @@
                 <td data-label="Stock">
                     <span class="fw-bold
                         {% if item.stock == 0 %}text-danger
-                        {% elif item.stock <= 5 %}text-warning{% endif %}">
+                        {% elif item.stock <= 5 %}text-warn{% endif %}">
                         {{ item.stock }}
                     </span>
                 </td>
@@ -130,44 +141,56 @@
                     <span class="badge bg-secondary">Inactive</span>
                     {% endif %}
                 </td>
-                <td data-label="Actions">
-                    <div class="d-flex gap-1 flex-wrap">
-                        <a href="{% url 'inventory:admin_detail' item.pk %}"
-                           class="btn btn-sm btn-outline-secondary"
-                           title="View">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{% url 'inventory:admin_edit' item.pk %}"
-                           class="btn btn-sm btn-outline-primary"
-                           title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a href="{% url 'inventory:admin_stock' item.pk %}"
-                           class="btn btn-sm btn-outline-warning"
-                           title="Adjust Stock">
-                            <i class="bi bi-boxes"></i>
-                        </a>
-                        <form method="post"
-                              action="{% url 'inventory:admin_delete' item.pk %}"
-                              class="d-inline"
-                              data-pt-confirm
-                              data-pt-confirm-title="Delete Item"
-                              data-pt-confirm-body="Delete &quot;{{ item.name|escapejs }}&quot;? This cannot be undone."
-                              data-pt-confirm-label="Delete"
-                              data-pt-confirm-class="btn-danger">
-                            {% csrf_token %}
-                            <button type="submit"
-                                    class="btn btn-sm btn-outline-danger"
-                                    title="Delete">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </form>
+                <td class="td-actions">
+                    <div class="dropdown">
+                        <button class="btn btn-icon" type="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                aria-label="Actions for {{ item.name }}">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'inventory:admin_detail' item.pk %}">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'inventory:admin_edit' item.pk %}">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'inventory:admin_stock' item.pk %}">
+                                    <i class="bi bi-boxes"></i> Adjust stock
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post"
+                                      action="{% url 'inventory:admin_delete' item.pk %}"
+                                      data-pt-confirm
+                                      data-pt-confirm-title="Delete item"
+                                      data-pt-confirm-body="&quot;{{ item.name|escapejs }}&quot; will be permanently removed. This cannot be undone."
+                                      data-pt-confirm-label="Delete"
+                                      data-pt-confirm-class="btn-danger">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                 </td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="8" class="text-center text-muted py-4">
+            <tr class="empty-state">
+                <td colspan="8">
+                    <i class="bi bi-box-seam"></i>
                     No items found.
                 </td>
             </tr>
