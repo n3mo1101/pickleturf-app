@@ -9,10 +9,12 @@
         <p class="pt-page-subtitle">Track and manage all payments</p>
     </div>
     <div class="pt-page-actions">
-        <a href="{% url 'dashboard:export_transactions' %}"
-           class="btn btn-sm btn-outline-secondary">
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-bs-toggle="modal" data-bs-target="#ptExportModal"
+                data-export-url="{% url 'dashboard:export_csv' %}"
+                data-export-type="transactions">
             <i class="bi bi-download"></i> Export CSV
-        </a>
+        </button>
     </div>
 </header>
 

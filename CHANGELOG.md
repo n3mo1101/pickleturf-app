@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-09 — Export CSV modal
+
+### Added
+- Reusable export modal (type + date range picker with "All records" toggle), shared from base layout on the dashboard and transactions pages
+- Daily revenue (`Date, Total`) and monthly revenue (`Month, Total`) CSV reports over the same paid/pending data as the dashboard
+- Export coverage tests (auth, type/range validation, CSV shape)
+
+### Changed
+- Dashboard header dropdown and transactions-page direct link replaced by a single modal trigger button
+- One unified `dashboard:export_csv` endpoint (`?type=&start=&end=`); transactions export now supports date ranges and range-stamped filenames
+
+### Removed
+- Raw Bookings and Rentals CSV exports and their `export/bookings`, `export/rentals` routes
+
 ## 2026-10-09 — Analytics dashboard & filters
 
 ### Added

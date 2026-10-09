@@ -11,32 +11,11 @@
         <p class="pt-page-subtitle">{{ today|date:"l, F j, Y" }}</p>
     </div>
     <div class="pt-page-actions">
-        <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
-                    data-bs-toggle="dropdown">
-                <i class="bi bi-download"></i> Export CSV
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li>
-                    <a class="dropdown-item"
-                       href="{% url 'dashboard:export_transactions' %}">
-                        <i class="bi bi-cash-stack"></i> Transactions
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item"
-                       href="{% url 'dashboard:export_bookings' %}">
-                        <i class="bi bi-calendar3"></i> Bookings
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item"
-                       href="{% url 'dashboard:export_rentals' %}">
-                        <i class="bi bi-clock-history"></i> Rentals
-                    </a>
-                </li>
-            </ul>
-        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-bs-toggle="modal" data-bs-target="#ptExportModal"
+                data-export-url="{% url 'dashboard:export_csv' %}">
+            <i class="bi bi-download"></i> Export CSV
+        </button>
     </div>
 </header>
 

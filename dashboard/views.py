@@ -223,88 +223,114 @@ def index(request):
     return render(request, 'dashboard/index.html', context)
 
 
-# ── CSV Exports ────────────────────────────────────────────────────────────────
+# ── CSV Export (modal-driven) ──────────────────────────────────────────────────
 
-@admin_or_staff_required
-def export_transactions_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = (
-        f'attachment; filename="transactions_{date.today()}.csv"'
-    )
-    writer = csv.writer(response)
-    writer.writerow([
-        'ID', 'Date', 'Type', 'Amount',
-        'Payment Status', 'Description', 'Created By',
-    ])
-
-    for tx in Transaction.objects.select_related('user', 'created_by').order_by('-created_at'):
-        writer.writerow([
-            tx.pk,
-            tx.created_at.strftime('%Y-%m-%d %H:%M'),
-            tx.get_tx_type_display(),
-            tx.amount,
-            tx.get_payment_status_display(),
-            strip_tx_prefix(tx.description),
-            tx.created_by.email if tx.created_by else '—',
-        ])
-
-    return response
+_EXPORT_TYPES = ('transactions', 'daily', 'monthly')
+_EXPORT_FILENAMES = {
+    'transactions': 'transactions',
+    'daily':        'daily_revenue',
+    'monthly':      'monthly_revenue',
+}
 
 
-@admin_or_staff_required
-def export_bookings_csv(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = (
-        f'attachment; filename="bookings_{date.today()}.csv"'
-    )
-    writer = csv.writer(response)
-    writer.writerow([
-        'ID', 'Customer', 'Email', 'Court',
-        'Date', 'Start Time', 'End Time',
-        'Price', 'Status', 'Booked At',
-    ])
+def _export_range(request):
+    """Parse optional start/end date query params (YYYY-MM-DD). Raises ValueError."""
+    start = request.GET.get('start') or None
+    end   = request.GET.get('end') or None
+    try:
+        if start:
+            start = date.fromisoformat(start)
+        if end:
+            end = date.fromisoformat(end)
+    except ValueError:
+        raise ValueError('Invalid date range')
+    return start, end
 
-    for b in Booking.objects.select_related('court', 'user').order_by('-date', '-start_time'):
-        writer.writerow([
-            b.pk,
-            b.user.full_name,
-            b.user.email,
-            b.court.name,
-            b.date.strftime('%Y-%m-%d'),
-            b.start_time.strftime('%H:%M'),
-            b.end_time.strftime('%H:%M'),
-            b.price,
-            b.get_status_display(),
-            b.created_at.strftime('%Y-%m-%d %H:%M'),
-        ])
 
-    return response
+def _export_filename(kind, start, end):
+    suffix = f'{start}_{end}' if (start or end) else 'all'
+    return f'{_EXPORT_FILENAMES[kind]}_{suffix}.csv'
+
+
+def _filter_by_range(queryset, field, start, end):
+    if start:
+        queryset = queryset.filter(**{f'{field}__gte': start})
+    if end:
+        queryset = queryset.filter(**{f'{field}__lte': end})
+    return queryset
 
 
 @admin_or_staff_required
-def export_rentals_csv(request):
+def export_csv(request):
+    """Unified export driven by the export modal: ?type=&start=&end="""
+    kind = request.GET.get('type')
+
+    if kind not in _EXPORT_TYPES:
+        return HttpResponse('Invalid export type', status=400)
+
+    try:
+        start, end = _export_range(request)
+    except ValueError:
+        return HttpResponse('Invalid date range', status=400)
+
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = (
-        f'attachment; filename="rentals_{date.today()}.csv"'
+        f'attachment; filename="{_export_filename(kind, start, end)}"'
     )
     writer = csv.writer(response)
-    writer.writerow([
-        'ID', 'Item', 'Renter Name', 'Contact',
-        'Quantity', 'Total Cost', 'Status',
-        'Rented At', 'Returned At',
-    ])
 
-    for r in RentalRecord.objects.select_related('item').order_by('-rented_at'):
+    if kind == 'transactions':
+        rows = _filter_by_range(
+            Transaction.objects
+            .select_related('user', 'created_by')
+            .order_by('-created_at'),
+            'created_at__date', start, end,
+        )
         writer.writerow([
-            r.pk,
-            r.item.name,
-            r.renter_name,
-            r.renter_contact or '—',
-            r.quantity,
-            r.total_cost,
-            r.get_status_display(),
-            r.rented_at.strftime('%Y-%m-%d %H:%M'),
-            r.returned_at.strftime('%Y-%m-%d %H:%M') if r.returned_at else '—',
+            'ID', 'Date', 'Type', 'Amount',
+            'Payment Status', 'Description', 'Created By',
         ])
+        for tx in rows:
+            writer.writerow([
+                tx.pk,
+                tx.created_at.strftime('%Y-%m-%d %H:%M'),
+                tx.get_tx_type_display(),
+                tx.amount,
+                tx.get_payment_status_display(),
+                strip_tx_prefix(tx.description),
+                tx.created_by.email if tx.created_by else '—',
+            ])
+
+
+    elif kind == 'daily':
+        rows = _filter_by_range(
+            _revenue_queryset(),
+            'created_at__date', start, end,
+        )
+        writer.writerow(['Date', 'Total'])
+        for r in (
+            rows
+            .annotate(day=TruncDate('created_at'))
+            .values('day')
+            .annotate(total=Sum('amount'))
+            .order_by('day')
+        ):
+            writer.writerow([r['day'].strftime('%Y-%m-%d'), r['total']])
+
+
+    else:  # monthly
+        rows = _filter_by_range(
+            _revenue_queryset(),
+            'created_at__date', start, end,
+        )
+        writer.writerow(['Month', 'Total'])
+        for r in (
+            rows
+            .annotate(month=TruncMonth('created_at'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        ):
+            writer.writerow([r['month'].strftime('%Y-%m'), r['total']])
 
     return response
